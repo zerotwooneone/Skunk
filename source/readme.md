@@ -9,6 +9,9 @@ An angular SPA for the skunk application
 To run (from skukapp directory)
 > ng serve --open
 
+To generate a new UI component
+> ng generate component <componentName> --display-block
+
 ### publish
 
 > ng build --output-path ../publish/skunkapp
