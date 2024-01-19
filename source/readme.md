@@ -25,6 +25,11 @@ might need something like `--base-href /skunkapp/` if not hosted in wwwroot
 
 > ng new trustbuster --prefix=tb --routing --strict --view-encapsulation=ShadowDom --style=scss
 
+Add PWA so that the app can be installed like a desktop app
 > ng add @angular/pwa
 
+Add Material to get some UI elements
 > ng add @angular/material
+
+Add Environments to provide deployment specific variables (environment.ts and environment.development.ts)
+> ng g environments
