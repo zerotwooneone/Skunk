@@ -10,7 +10,7 @@ To run (from skukapp directory)
 > ng serve --open
 
 To generate a new UI component
-> ng generate component <componentName> --display-block
+> ng generate component `componentName` --display-block
 
 ### publish
 
