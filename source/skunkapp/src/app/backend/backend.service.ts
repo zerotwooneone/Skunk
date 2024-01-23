@@ -54,6 +54,10 @@ export class BackendService {
     this._connection?.on('PongFrontEnd', async () => {
       console.info('got pong from backend');
     });
+
+    this._connection?.on('SensorDataToFrontend', async (data) => {
+      console.info('sensor data', data);
+    })
   }
 
   async ping(): Promise<undefined> {

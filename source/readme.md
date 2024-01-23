@@ -33,3 +33,6 @@ Add Material to get some UI elements
 
 Add Environments to provide deployment specific variables (environment.ts and environment.development.ts)
 > ng g environments
+
+Add component that defaults to display:block
+> ng g c home --display-block

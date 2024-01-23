@@ -60,5 +60,5 @@ app.UseAuthorization();
 app.MapControllerRoute(
     "default",
     "{controller=Home}/{action=Index}/{id?}");
-app.MapHub<FontendHub>("/FrontendHub");
+app.MapHub<FrontendHub>("/FrontendHub");
 app.Run();

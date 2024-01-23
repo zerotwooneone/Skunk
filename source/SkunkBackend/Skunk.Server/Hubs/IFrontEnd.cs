@@ -3,7 +3,7 @@
     /// <summary>
     /// This is the interface of the methods which we can call from the backend to the frontend
     /// </summary>
-    public interface IFrontEnd
+    public interface IFrontend
     {
         /// <summary>
         /// This requests ALL clients send us a Pong
@@ -16,5 +16,7 @@
         /// </summary>
         /// <returns></returns>
         Task PongFrontend();
+
+        Task SensorDataToFrontend(SensorPayload sensorPayload);
     }
 }
