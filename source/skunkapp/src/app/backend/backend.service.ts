@@ -1,15 +1,24 @@
 import { Injectable } from '@angular/core';
 import * as signalR from "@microsoft/signalr";
 import { environment } from "../../environments/environment"
+import { Observable, Subject } from 'rxjs';
+import { SensorCollection, SensorPayload, SensorValue } from './SensorPayload';
 
 @Injectable({
   providedIn: 'root'
 })
 export class BackendService {
 
-  private _connected: Boolean = false;
+  private _connected: boolean = false;
   private _connection: signalR.HubConnection | undefined;
+  readonly SensorData$: Observable<SensorPayload>;
+  private readonly _sensorData: Subject<SensorPayload>;
+  get connected(): boolean {
+    return this._connected;
+  }
   constructor() {
+    this._sensorData = new Subject<SensorPayload>();
+    this.SensorData$ = this._sensorData;
     const defaultBuilder = new signalR.HubConnectionBuilder()
       .withAutomaticReconnect()
       .withKeepAliveInterval(5000)
@@ -55,12 +64,47 @@ export class BackendService {
       console.info('got pong from backend');
     });
 
-    this._connection?.on('SensorDataToFrontend', async (data) => {
-      console.info('sensor data', data);
+    this._connection?.on('SensorDataToFrontend', async (data: DtSensorPayload | undefined) => {
+      if (!data || !data?.sensors) {
+        //todo: log debug
+        return;
+      }
+      const sensors: { [key: string]: { [key: string]: number } } = {}
+      const payload: SensorPayload = { Sensors: sensors };
+      for (const sensorName in data.sensors) {
+        const dataSensor = data.sensors[sensorName];
+        if (!dataSensor) {
+          continue;
+        }
+        if (!Object.hasOwn(payload, sensorName)) {
+          sensors[sensorName] = {};
+        }
+        const payloadSensor = sensors[sensorName];
+        for (const valueName in data.sensors[sensorName]) {
+          const value = dataSensor[valueName];
+          if (value == undefined) {
+            continue;
+          }
+          payloadSensor[valueName] = value;
+        }
+      }
+      this._sensorData.next(payload);
     })
   }
 
   async ping(): Promise<undefined> {
     await this._connection?.invoke('PingBackend');
   }
+}
+
+class DtSensorPayload {
+  readonly sensors?: DtSensorCollection;
+}
+
+class DtSensorCollection {
+  [key: string]: DtSensorValue | undefined;
+}
+
+class DtSensorValue {
+  [key: string]: number | undefined;
 }

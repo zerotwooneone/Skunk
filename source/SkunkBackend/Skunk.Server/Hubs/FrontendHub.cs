@@ -16,6 +16,7 @@ namespace Skunk.Server.Hubs
 
             Task.Factory.StartNew(async () =>
             {
+                var random = new Random(1337);
                 if (testingStarted)
                 {
                     return;
@@ -31,7 +32,7 @@ namespace Skunk.Server.Hubs
                         new Dictionary<string, SensorValues>{
                             {"Dummy Sensor", new SensorValues(new Dictionary<string, float>
                             {
-                                { "Value -999", -999f }
+                                { "Value -999", random.NextSingle() }
                              })
                         } }
                         });
