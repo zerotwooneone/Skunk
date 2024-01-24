@@ -24,9 +24,7 @@ builder.Services.AddCors(options =>
 
 
 builder.Services.AddSingleton<ServerJsonContext>();
-
 builder.Services.AddSignalR();
-
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();

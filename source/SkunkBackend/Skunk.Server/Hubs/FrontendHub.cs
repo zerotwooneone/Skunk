@@ -1,52 +1,75 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 
-namespace Skunk.Server.Hubs
-{
-    public class FrontendHub : Hub<IFrontend>
-    {
-        private static bool testingStarted = false;
-        
-        /// <summary>
-        /// this is called by the frontend when it expects a response back as a Pong
-        /// </summary>
-        /// <returns></returns>
-        public async Task PingBackend()
-        {
-            await Clients.All.PongFrontend();
+namespace Skunk.Server.Hubs;
 
-            Task.Factory.StartNew(async () =>
+public class FrontendHub : Hub<IFrontend>
+{
+    /// <summary>
+    /// A reference to this hub's clients and groups
+    /// </summary>
+    /// <remarks>This can be used on background threads where this.Clients would fail</remarks>
+    private readonly IHubContext<FrontendHub> _hubContext;
+
+    public FrontendHub(IHubContext<FrontendHub> hubContext)
+    {
+        _hubContext = hubContext;
+    }
+    public const string StreamingGroupKey = "Streaming";
+    /// <summary>
+    /// this is called by the frontend when it expects a response back as a Pong
+    /// </summary>
+    /// <returns></returns>
+    public async Task PingBackend()
+    {
+        await Clients.All.PongFrontend();
+    }
+
+    /// <summary>
+    /// this is caled by the frontend when it is responding to a Ping that we send from the backend
+    /// </summary>
+    /// <returns></returns>
+    public async Task PongBackend()
+    {
+        Console.WriteLine("Got Pong");
+    }
+
+    private static bool testingStarted = false;
+    public override async Task OnConnectedAsync()
+    {
+        //todo: let the client add themselves to the group
+        await Groups.AddToGroupAsync(Context.ConnectionId, StreamingGroupKey);
+
+        Task.Factory.StartNew(async () =>
+        {
+            var random = new Random(1337);
+            if (testingStarted)
             {
-                var random = new Random(1337);
-                if (testingStarted)
+                return;
+            }
+            testingStarted = true;
+            while (testingStarted)
+            {
+                await Task.Delay(1000);
+                try
                 {
-                    return;
-                }
-                testingStarted = true;
-                while (testingStarted)
-                {
-                    await Task.Delay(1000);
-                    Clients.All.SensorDataToFrontend(
-                        new SensorPayload
+                    await _hubContext.Clients.Groups(StreamingGroupKey).SendCoreAsync("SensorDataToFrontend",
+                        new[]{new SensorPayload
                         {
                             Sensors =
-                        new Dictionary<string, SensorValues>{
-                            {"Dummy Sensor", new SensorValues(new Dictionary<string, float>
-                            {
-                                { "Value -999", random.NextSingle() }
-                             })
-                        } }
-                        });
+                                new Dictionary<string, SensorValues>{
+                                {"Dummy Sensor", new SensorValues(new Dictionary<string, float>
+                                    {
+                                        { "Value -999", random.NextSingle() }
+                                    })
+                                } }
+                        }});
                 }
-            });
-        }
-
-        /// <summary>
-        /// this is caled by the frontend when it is responding to a Ping that we send from the backend
-        /// </summary>
-        /// <returns></returns>
-        public async Task PongBackend()
-        {
-            Console.WriteLine("Got Pong");
-        }
+                catch (Exception e)
+                {
+                    Console.Error.WriteLine(e);
+                }
+            }
+        });
+        await base.OnConnectedAsync();
     }
 }

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import * as signalR from "@microsoft/signalr";
 import { environment } from "../../environments/environment"
 import { Observable, Subject } from 'rxjs';
-import { SensorCollection, SensorPayload, SensorValue } from './SensorPayload';
+import { SensorPayload } from './SensorPayload';
 
 @Injectable({
   providedIn: 'root'
@@ -58,7 +58,7 @@ export class BackendService {
       this.registerHandlers();
     } catch (exception) {
       console.error("error registering handlers", exception);
-    }    
+    }
 
     this._connected = true;
     return this._connected;
