@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
-import { Observable } from 'rxjs';
 
 @Component({
   selector: 'sk-test-text',
@@ -10,5 +9,8 @@ import { Observable } from 'rxjs';
   styleUrl: './test-text.component.scss'
 })
 export class TestTextComponent {
-  @Input() value: number = 0;
+  @Input() value: number | null = null;
+  get hasValue(): boolean {
+    return this.value !== null && this.value !== undefined;
+  }
 }

@@ -39,16 +39,29 @@ export class BackendService {
     })
   }
 
-  async connect(): Promise<undefined> {
+  async connect(): Promise<boolean> {
     if (this._connected) {
       console.warn(`already connected`);
-      return;
+      return this._connected;
     }
-    await this._connection?.start();
+    if (!this._connection) {
+      return false;
+    }
+    try {
+      await this._connection.start();
+    } catch (exception) {
+      console.error("error connecting", exception);
+      return false;
+    }
 
-    this.registerHandlers();
+    try {
+      this.registerHandlers();
+    } catch (exception) {
+      console.error("error registering handlers", exception);
+    }    
 
     this._connected = true;
+    return this._connected;
   }
 
   private registerHandlers(): void {
@@ -89,11 +102,23 @@ export class BackendService {
         }
       }
       this._sensorData.next(payload);
-    })
+    });
   }
 
-  async ping(): Promise<undefined> {
-    await this._connection?.invoke('PingBackend');
+  async ping(): Promise<boolean> {
+    if (!this._connected) {
+      return false;
+    }
+    if (!this._connection) {
+      return false;
+    }
+    try {
+      await this._connection?.invoke('PingBackend');
+    } catch (exception) {
+      console.error('problem with ping', exception);
+      return false;
+    }
+    return true;
   }
 }
 
