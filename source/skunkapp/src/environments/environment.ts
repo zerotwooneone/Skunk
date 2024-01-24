@@ -1,3 +1,6 @@
+import { SensorsConfig } from "./SensorsConfig";
+
+const sensorsConfig: SensorsConfig = {};
 export const environment = {
     isDevelopment: false,
 
@@ -6,4 +9,5 @@ export const environment = {
 
     //make sure this matches the hub config on the backend exactly
     hubPath: "/FrontendHub",
+    sensors: sensorsConfig,
 };

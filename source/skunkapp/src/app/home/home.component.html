@@ -1,2 +1,5 @@
 <p>home works!</p>
-<sk-test-text [value]="(testValue|async)"></sk-test-text>
+<sk-test-text [value]="(testValue$|async)"></sk-test-text>
+<div>
+    <mat-progress-bar mode="determinate" [value]="(dummySensorValue$|async)" />
+</div>

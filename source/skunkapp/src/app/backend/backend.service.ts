@@ -77,7 +77,7 @@ export class BackendService {
       console.info('got pong from backend');
     });
 
-    this._connection?.on('SensorDataToFrontend', async (data: DtSensorPayload | undefined) => {
+    this._connection?.on('SensorDataToFrontend', async (data: SensorPayloadDto | undefined) => {
       if (!data || !data?.sensors) {
         //todo: log debug
         return;
@@ -122,14 +122,14 @@ export class BackendService {
   }
 }
 
-class DtSensorPayload {
-  readonly sensors?: DtSensorCollection;
+class SensorPayloadDto {
+  readonly sensors?: SensorCollectionDto;
 }
 
-class DtSensorCollection {
-  [key: string]: DtSensorValue | undefined;
+class SensorCollectionDto {
+  [key: string]: SensorValueDto | undefined;
 }
 
-class DtSensorValue {
+class SensorValueDto {
   [key: string]: number | undefined;
 }
