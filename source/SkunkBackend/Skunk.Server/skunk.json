@@ -1,5 +1,6 @@
 {
   "Serial": {
-    "ComPortName": "/dev/ttyACM0" //use something like "COM5" for windows. use something like "/dev/ttyACM0" for linux
+    "ComPortName": "/dev/ttyACM0", //use something like "COM5" for windows. use something like "/dev/ttyACM0" for linux
+    "BaudRate": 9600
   }  
 }

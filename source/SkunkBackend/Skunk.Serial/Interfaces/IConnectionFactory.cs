@@ -2,5 +2,6 @@
 
 public interface IConnectionFactory
 {
-    Task<IConnection> GetConnection();
+    IEnumerable<string> GetPortNames();
+    bool TryCreate(string portName, out IConnection? connection);
 }

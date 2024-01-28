@@ -1,8 +1,9 @@
 ﻿namespace Skunk.Serial.Interfaces;
 
-public interface IConnection
-{
-    Task Open(string portName);
-    Task Close();
+/// <summary>
+/// Represents an open serial connection
+/// </summary>
+public interface IConnection : IDisposable
+{    
     event EventHandler<string> ReceivedString;
 }

@@ -3,6 +3,7 @@ using Skunk.Serial;
 using Skunk.Serial.Configuration;
 using Skunk.Server.Hubs;
 using Skunk.Server.Json;
+using Skunk.Server.Serial;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,24 +33,9 @@ builder.Services.AddSingleton<ServerJsonContext>();
 builder.Services.AddSignalR();
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddSingleton<Connection>();
-builder.Services.Configure<SerialConfiguration>(
-    builder.Configuration.GetSection("Serial"));
+builder.Services.AddSerial(builder.Configuration);
 
 var app = builder.Build();
-
-
-
-//todo:remove this test code
-var serviceProvider = builder.Services.BuildServiceProvider();
-var connection = serviceProvider.GetRequiredService<Connection>();
-var serialConfig = serviceProvider.GetRequiredService<IOptions<SerialConfiguration>>();
-var pLogger = serviceProvider.GetRequiredService<ILogger<Program>>();
-connection.ReceivedString += (s, e) => {
-    pLogger.LogInformation("string received {string}", e);
-};
-await connection.Open(serialConfig.Value.ComPortName);
-
 
 
 // Configure the HTTP request pipeline.

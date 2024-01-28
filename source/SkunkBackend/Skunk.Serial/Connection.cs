@@ -1,5 +1,4 @@
 ﻿using System.IO.Ports;
-using System.Text;
 using Microsoft.Extensions.Logging;
 using Skunk.Serial.Interfaces;
 
@@ -7,84 +6,73 @@ namespace Skunk.Serial;
 
 public class Connection : IConnection
 {
+    public event EventHandler<string>? ReceivedString;
+
     private readonly ILogger<Connection> _logger;
-    public Connection(ILogger<Connection> logger)
+    private readonly SerialPort _serialPort;
+
+    public Connection(
+        ILogger<Connection> logger,
+        SerialPort serialPort)
     {
         _logger = logger;
-    }
-    public IEnumerable<string> GetPortNames()
-    {
-        return SerialPort.GetPortNames();
-    }
+        _serialPort = serialPort;
 
-    public async Task Open(string portName)
-    {
-        if(string.IsNullOrWhiteSpace(portName))
+        void OnSerialPortOnDataReceived(object sender, SerialDataReceivedEventArgs eventArgs)
         {
-            _logger.LogError("Portname was null or blank");
-            return;
-        }
-        var portNames = GetPortNames();
-        _logger.LogDebug("Found port names {names}", string.Join(",", portNames));
-        
-        var foundPortName = portNames.FirstOrDefault(p=>p.Equals(portName, StringComparison.OrdinalIgnoreCase));
-
-        if(string.IsNullOrWhiteSpace(foundPortName))
-        {
-            _logger.LogError("Portname was not found {portName}", portName);
-            return;
-        }
-        const int baudRate = 9600; //9600 default for arduino
-        const Parity parity = Parity.None;
-
-        try
-        {
-            var serialPort = new SerialPort(foundPortName, baudRate, parity)
+            if (serialPort.BytesToRead == 0)
             {
-                //StopBits = StopBits.None,
-                DataBits = 8,
-                Handshake = Handshake.None,
-                Encoding = Encoding.UTF8
-            };
-
-            void OnSerialPortOnDataReceived(object sender, SerialDataReceivedEventArgs eventArgs)
-            {
-                if(serialPort.BytesToRead == 0)
-                {
-                    return;
-                }
-
-                var existingString = serialPort.ReadLine().Replace("\r",string.Empty).Replace("\n",string.Empty);
-
-                RaiseReceivedString(existingString);
-                _logger.LogDebug("Got data {portName}:{length} {existingString}", foundPortName, serialPort.BytesToRead, existingString);
+                return;
             }
 
-            serialPort.DataReceived += OnSerialPortOnDataReceived;
+            var existingString = serialPort
+                .ReadLine()
+                .Replace("\r", string.Empty)
+                .Replace("\n", string.Empty);
 
+            RaiseReceivedString(existingString);
+        }
+
+        serialPort.DataReceived += OnSerialPortOnDataReceived;
+
+        //todo: sense disconnect
+
+        serialPort.ErrorReceived += (s, e) =>
+        {
+            _logger.LogError("Serial Error Received. ErrorType: {eventInt} - {eventType}", (int)e.EventType, e.EventType.ToString());
             try
             {
-                serialPort.Open();
+                //try to clear the buffer
+                serialPort.ReadExisting();
             }
             catch
             {
-                serialPort.DataReceived -= OnSerialPortOnDataReceived;
-                serialPort.Dispose();
-                throw;
+                _logger.LogError("Error trying to clear buffer on serial error. Bytes:{bytes}", serialPort.BytesToRead);
+            }
+        };
+    }     
+
+    public void Dispose()
+    {
+        if(_serialPort.IsOpen) {
+            try
+            {
+                _serialPort.Close();
+            }
+            catch
+            {
+                //empty
             }
         }
-        catch (Exception e)
+        try
         {
-            _logger.LogError(e,"Error creating COM port {PortName}",portName);
+            _serialPort.Dispose();
         }
-    } 
-
-    public async Task Close()
-    {
-        throw new NotImplementedException();
+        catch
+        {
+            //empty
+        }
     }
-
-    public event EventHandler<string>? ReceivedString;
 
     protected void RaiseReceivedString(string message)
     {
