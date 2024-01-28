@@ -1,4 +1,5 @@
-﻿using Skunk.Server.Hubs;
+﻿using Skunk.Serial;
+using Skunk.Server.Hubs;
 using Skunk.Server.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,6 +29,19 @@ builder.Services.AddSignalR();
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
+
+
+
+//todo:remove this test code
+var serviceProvider = builder.Services.BuildServiceProvider();
+var connection = new Connection(serviceProvider.GetRequiredService<ILogger<Connection>>());
+var pLogger = serviceProvider.GetRequiredService<ILogger<Program>>();
+connection.ReceivedString += (s, e) => {
+    pLogger.LogInformation("string received {string}", e);
+};
+await connection.Open("COM5");
+
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
