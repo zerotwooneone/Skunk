@@ -2,5 +2,5 @@
 
 public class SerialConfiguration
 {
-    public string ComPortName { get; init; } = "COM5";
+    public string ComPortName { get; init; } = "ttyACM0";
 }
