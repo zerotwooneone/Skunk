@@ -2,5 +2,5 @@
 
 public class SerialConfiguration
 {
-    public string ComPortName { get; init; } = "ttyACM0";
+    public string ComPortName { get; init; } = "/dev/ttyACM0";
 }
