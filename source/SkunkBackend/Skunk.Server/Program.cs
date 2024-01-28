@@ -1,7 +1,4 @@
-﻿using Microsoft.Extensions.Options;
-using Skunk.Serial;
-using Skunk.Serial.Configuration;
-using Skunk.Server.Hubs;
+﻿using Skunk.Server.Hubs;
 using Skunk.Server.Json;
 using Skunk.Server.Serial;
 
@@ -34,6 +31,7 @@ builder.Services.AddSignalR();
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddSerial(builder.Configuration);
+builder.Services.AddHubs();
 
 var app = builder.Build();
 

@@ -14,7 +14,7 @@ public class FrontendHub : Hub<IFrontend>
     {
         _hubContext = hubContext;
     }
-    public const string StreamingGroupKey = "Streaming";
+    
     /// <summary>
     /// this is called by the frontend when it expects a response back as a Pong
     /// </summary>
@@ -37,8 +37,9 @@ public class FrontendHub : Hub<IFrontend>
     public override async Task OnConnectedAsync()
     {
         //todo: let the client add themselves to the group
-        await Groups.AddToGroupAsync(Context.ConnectionId, StreamingGroupKey);
+        await Groups.AddToGroupAsync(Context.ConnectionId, HubGroupKeys.Streaming);
 
+        //todo:move this test code to another service
         Task.Factory.StartNew(async () =>
         {
             var random = new Random(1337);
@@ -52,8 +53,9 @@ public class FrontendHub : Hub<IFrontend>
                 await Task.Delay(1000);
                 try
                 {
-                    await _hubContext.Clients.Groups(StreamingGroupKey).SendCoreAsync("SensorDataToFrontend",
-                        new[]{new SensorPayload
+                    await _hubContext.Clients.Groups(HubGroupKeys.Streaming).SendCoreAsync("SensorDataToFrontend",
+                    [
+                        new SensorPayload
                         {
                             Sensors =
                                 new Dictionary<string, SensorValues>{
@@ -62,7 +64,8 @@ public class FrontendHub : Hub<IFrontend>
                                         { "Value -999", random.NextSingle() }
                                     })
                                 } }
-                        }});
+                        }
+                    ]);
                 }
                 catch (Exception e)
                 {
@@ -72,4 +75,6 @@ public class FrontendHub : Hub<IFrontend>
         });
         await base.OnConnectedAsync();
     }
+
+    
 }
