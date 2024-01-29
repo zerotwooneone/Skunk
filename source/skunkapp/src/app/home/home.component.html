@@ -4,9 +4,14 @@
         <mat-progress-bar mode="determinate" [value]="(dummySensorValue$|async)" />
     </div>
     <div class="sensor-container">
-        <h2>Formaldehyde</h2>
+        <h2>Formaldehyde*</h2>
         <p-knob [ngModel]="(formaldehydeSensorValue$|async)" [max]="this.formaldehydeSensorConfig.MaxValue ?? 1"
             [readonly]="true">
         </p-knob>
     </div>
+</div>
+<div>
+    <p>
+        <b>*</b>This is an uncalibrated value which only indicates relative values
+    </p>
 </div>
