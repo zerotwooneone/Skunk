@@ -1,6 +1,11 @@
 import { SensorsConfig } from "./SensorsConfig";
 
-const sensorsConfig: SensorsConfig = {};
+const sensorsConfig: SensorsConfig = {
+    Formaldehyde: {
+        id: 'Formaldehyde',
+        MaxValue: 32767 // (2^31) - 1 (short) max value
+    }
+};
 export const environment = {
     isDevelopment: false,
 

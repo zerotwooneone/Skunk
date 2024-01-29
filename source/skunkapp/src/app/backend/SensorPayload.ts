@@ -1,5 +1,6 @@
 export class SensorPayload {
     readonly Sensors: SensorCollection = {};
+    readonly Formaldehyde?: number;
 }
 
 export class SensorCollection {

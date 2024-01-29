@@ -43,7 +43,7 @@ namespace Skunk.Server.Serial
 
         private async void OnSerialString(object? sender, string e)
         {
-            _logger.LogInformation("string received {String}", e);
+            //_logger.LogInformation("string received {String}", e);
             const string BzHeader = "BZ:";
             if (!e.StartsWith(BzHeader))
             {

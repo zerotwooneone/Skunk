@@ -15,10 +15,11 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
   styleUrl: './home.component.scss'
 })
 export class HomeComponent {
-  readonly testValue$: Observable<number>;
   readonly sensorsConfig: SensorsConfig = environment.sensors;
   readonly dummySensorConfig: SensorConfig = this.sensorsConfig.DummySensor ?? { id: 'unknown' };
-  readonly dummySensorValue$: Observable<number | undefined>; 
+  readonly dummySensorValue$: Observable<number | undefined>;
+  readonly formaldehydeSensorConfig: SensorConfig = this.sensorsConfig.Formaldehyde;
+  readonly formaldehydeSensorValue$: Observable<number>;
   constructor(
     private readonly backend: BackendService
   ) {
@@ -32,14 +33,6 @@ export class HomeComponent {
       map(p => {
         return p.Sensors[this.dummySensorConfig.id];
       }));
-    this.testValue$ = dummySensorPayload.pipe(
-      map(p => {
-        if (!Object.hasOwn(p, 'Value -999')) {
-          return 0;
-        }
-        return p['Value -999'];
-      })
-    );
     this.dummySensorValue$ = dummySensorPayload.pipe(
       map(p => {
         //incoming value is between 0 and 1
@@ -51,5 +44,11 @@ export class HomeComponent {
         return p['Value -999'] * 100;
       })
     );
+    this.formaldehydeSensorValue$ = backend.SensorData$.pipe(
+      filter(p => (typeof p.Formaldehyde) == 'number'),
+      map(p => {
+        console.warn(`Formaldehyde:${p.Formaldehyde}`);
+        return (p.Formaldehyde as number) / (this.formaldehydeSensorConfig.MaxValue ?? 1);
+      }));
   }
 }

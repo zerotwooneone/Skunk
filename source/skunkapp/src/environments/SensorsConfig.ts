@@ -1,6 +1,7 @@
 export type SensorsConfig = {
     readonly [key: string]: SensorConfig | undefined;
     readonly DummySensor?: SensorConfig;
+    readonly Formaldehyde: SensorConfig;
 };
 
 export type NumericConfigValues = { readonly [key: string]: number | undefined };

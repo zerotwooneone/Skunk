@@ -5,6 +5,10 @@ const sensors: SensorsConfig = {
         id: 'Dummy Sensor',
         MinValue: 0,
         MaxValue: 1,
+    },
+    Formaldehyde: {
+        id: 'Formaldehyde',
+        MaxValue: 32767 // (2^31) - 1 (short) max value
     }
 };
 export const environment = {

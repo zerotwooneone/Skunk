@@ -78,12 +78,15 @@ export class BackendService {
     });
 
     this._connection?.on('SensorDataToFrontend', async (data: SensorPayloadDto | undefined) => {
-      if (!data || !data?.sensors) {
+      if (!data) {
         //todo: log debug
         return;
       }
       const sensors: { [key: string]: { [key: string]: number } } = {}
-      const payload: SensorPayload = { Sensors: sensors };
+      const payload: SensorPayload = {
+        Sensors: sensors,
+        Formaldehyde: data.formaldehyde
+      };
       for (const sensorName in data.sensors) {
         const dataSensor = data.sensors[sensorName];
         if (!dataSensor) {
@@ -124,6 +127,7 @@ export class BackendService {
 
 class SensorPayloadDto {
   readonly sensors?: SensorCollectionDto;
+  readonly formaldehyde?: number;
 }
 
 class SensorCollectionDto {

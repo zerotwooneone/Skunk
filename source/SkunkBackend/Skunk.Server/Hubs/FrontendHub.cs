@@ -10,9 +10,14 @@ public class FrontendHub : Hub<IFrontend>
     /// <remarks>This can be used on background threads where this.Clients would fail</remarks>
     private readonly IHubContext<FrontendHub> _hubContext;
 
-    public FrontendHub(IHubContext<FrontendHub> hubContext)
+    private readonly ILogger<FrontendHub> _logger;
+
+    public FrontendHub(
+        IHubContext<FrontendHub> hubContext,
+        ILogger<FrontendHub> logger)
     {
         _hubContext = hubContext;
+        _logger = logger;
     }
     
     /// <summary>
@@ -21,6 +26,7 @@ public class FrontendHub : Hub<IFrontend>
     /// <returns></returns>
     public async Task PingBackend()
     {
+        _logger.LogInformation("Got ping from front end");
         await Clients.All.PongFrontend();
     }
 
@@ -30,7 +36,7 @@ public class FrontendHub : Hub<IFrontend>
     /// <returns></returns>
     public async Task PongBackend()
     {
-        Console.WriteLine("Got Pong");
+        _logger.LogInformation("Got Pong");
     }
 
     private static bool testingStarted = false;
@@ -69,7 +75,7 @@ public class FrontendHub : Hub<IFrontend>
                 }
                 catch (Exception e)
                 {
-                    Console.Error.WriteLine(e);
+                    _logger.LogError(e, "Error sending dummy data");
                 }
             }
         });

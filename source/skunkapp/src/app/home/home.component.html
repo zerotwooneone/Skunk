@@ -1,5 +1,8 @@
 <p>home works!</p>
-<sk-test-text [value]="(testValue$|async)"></sk-test-text>
 <div>
     <mat-progress-bar mode="determinate" [value]="(dummySensorValue$|async)" />
+</div>
+<div>
+    <h2>Formaldehyde</h2>
+    <mat-progress-bar mode="determinate" [value]="(formaldehydeSensorValue$|async)" />
 </div>
