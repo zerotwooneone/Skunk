@@ -7,7 +7,7 @@ const sensors: SensorsConfig = {
         MaxValue: 1,
     },
     Formaldehyde: {
-        id: 'Formaldehyde',
+        id: 'BZ',
         MaxValue: 32767 // (2^31) - 1 (short) max value
     },
     Voc: {

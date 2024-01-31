@@ -2,7 +2,7 @@ import { SensorsConfig } from "./SensorsConfig";
 
 const sensorsConfig: SensorsConfig = {
     Formaldehyde: {
-        id: 'Formaldehyde',
+        id: 'BZ',
         MaxValue: 32767 // (2^31) - 1 (short) max value
     },
     Voc: {
