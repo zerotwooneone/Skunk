@@ -2,26 +2,27 @@
 
 namespace Skunk.Server.Hubs;
 
-public class ClientService : IClientService
+public class FrontendService : IFrontendService
 {
     private readonly IHubContext<FrontendHub> _hubContext;
-    private readonly ILogger<ClientService> _logger;
+    private readonly ILogger<FrontendService> _logger;
 
-    public ClientService(
+    public FrontendService(
         IHubContext<FrontendHub> hubContext,
-        ILogger<ClientService> logger)
+        ILogger<FrontendService> logger)
     {
         _hubContext = hubContext;
         _logger = logger;
     }
-    public async Task SendFormaldehydeValue(short value)
+    public async Task SendSensorPayload(SensorPayload payload)
     {
+        if (payload == null)
+        {
+            throw new ArgumentNullException(nameof(payload));
+        }
         await _hubContext.Clients.Groups(HubGroupKeys.Streaming).SendCoreAsync("SensorDataToFrontend",
             [
-                new SensorPayload
-                {
-                    Formaldehyde = value,
-                }
+                payload
             ]);
     }
 }

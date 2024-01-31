@@ -7,7 +7,7 @@ namespace Skunk.Server.Hubs
             this IServiceCollection services)
         {
             return services
-                .AddSingleton<IClientService, ClientService>();
+                .AddSingleton<IFrontendService, FrontendService>();
         }
     }
 }

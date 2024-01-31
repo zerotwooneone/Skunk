@@ -81,6 +81,4 @@ public class FrontendHub : Hub<IFrontend>
         });
         await base.OnConnectedAsync();
     }
-
-    
 }

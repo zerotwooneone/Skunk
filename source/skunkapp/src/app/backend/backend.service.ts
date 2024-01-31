@@ -3,11 +3,15 @@ import * as signalR from "@microsoft/signalr";
 import { environment } from "../../environments/environment"
 import { Observable, Subject } from 'rxjs';
 import { SensorPayload } from './SensorPayload';
+import { SensorConfig, SensorsConfig } from '../../environments/SensorsConfig';
 
 @Injectable({
   providedIn: 'root'
 })
 export class BackendService {
+
+  readonly sensorsConfig: SensorsConfig = environment.sensors;
+  readonly dummySensorConfig: SensorConfig = this.sensorsConfig.DummySensor ?? { id: 'unknown' };
 
   private _connected: boolean = false;
   private _connection: signalR.HubConnection | undefined;
@@ -82,28 +86,17 @@ export class BackendService {
         //todo: log debug
         return;
       }
-      const sensors: { [key: string]: { [key: string]: number } } = {}
+      const timeStampUnixMs = data.sensors?.["timeStamp"]?.["value"];
+      const timeStamp = !!timeStampUnixMs
+        ? new Date(timeStampUnixMs)
+        : undefined;
       const payload: SensorPayload = {
-        Sensors: sensors,
-        Formaldehyde: data.formaldehyde
-      };
-      for (const sensorName in data.sensors) {
-        const dataSensor = data.sensors[sensorName];
-        if (!dataSensor) {
-          continue;
-        }
-        if (!Object.hasOwn(payload, sensorName)) {
-          sensors[sensorName] = {};
-        }
-        const payloadSensor = sensors[sensorName];
-        for (const valueName in data.sensors[sensorName]) {
-          const value = dataSensor[valueName];
-          if (value == undefined) {
-            continue;
-          }
-          payloadSensor[valueName] = value;
-        }
-      }
+        Formaldehyde: data.sensors?.["BZ"]?.["value"],
+        Voc: data.sensors?.["VOC"]?.["value"],
+        CO2: data.sensors?.["CO2"]?.["value"],
+        DummySensor: data.sensors?.[this.dummySensorConfig.id]?.["Value -999"],
+        TimeStamp: timeStamp
+      };      
       this._sensorData.next(payload);
     });
   }
@@ -127,7 +120,6 @@ export class BackendService {
 
 class SensorPayloadDto {
   readonly sensors?: SensorCollectionDto;
-  readonly formaldehyde?: number;
 }
 
 class SensorCollectionDto {

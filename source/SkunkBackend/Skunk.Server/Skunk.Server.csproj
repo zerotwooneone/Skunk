@@ -10,4 +10,8 @@
     <ProjectReference Include="..\Skunk.Serial\Skunk.Serial.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="System.Reactive.Linq" Version="6.0.0" />
+  </ItemGroup>
+
 </Project>
