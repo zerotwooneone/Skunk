@@ -9,6 +9,18 @@
             [readonly]="true">
         </p-knob>
     </div>
+    <div class="sensor-container">
+        <h2>VOC ppb</h2>
+        <p-knob [ngModel]="(voc$|async)" [max]="this.vocConfig.MaxValue ?? 1"
+            [readonly]="true">
+        </p-knob>
+    </div>
+    <div class="sensor-container">
+        <h2>CO2 ppm</h2>
+        <p-knob [ngModel]="(co2$|async)" [max]="this.co2Config.MaxValue ?? 1"
+            [readonly]="true">
+        </p-knob>
+    </div>
 </div>
 <div>
     <p>

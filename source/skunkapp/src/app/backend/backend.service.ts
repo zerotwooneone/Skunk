@@ -91,14 +91,24 @@ export class BackendService {
         ? new Date(timeStampUnixMs)
         : undefined;
       const payload: SensorPayload = {
-        Formaldehyde: data.sensors?.["BZ"]?.["value"],
-        Voc: data.sensors?.["VOC"]?.["value"],
-        CO2: data.sensors?.["CO2"]?.["value"],
-        DummySensor: data.sensors?.[this.dummySensorConfig.id]?.["Value -999"],
+        Formaldehyde: this.GetSensorValue(data, this.sensorsConfig.Formaldehyde),
+        Voc: this.GetSensorValue(data, this.sensorsConfig.Voc),
+        CO2: this.GetSensorValue(data, this.sensorsConfig.Co2), 
+        DummySensor: this.GetSensorValue(data, this.sensorsConfig.DummySensor, "Value -999"),
         TimeStamp: timeStamp
       };      
       this._sensorData.next(payload);
     });
+  }
+
+  private GetSensorValue(
+    data: SensorPayloadDto, 
+    sensorConfig?: SensorConfig,
+    valueKey: string = "value"): number|undefined {
+    
+    return !!sensorConfig
+      ? data.sensors?.[sensorConfig.id]?.[valueKey]
+      : undefined;
   }
 
   async ping(): Promise<boolean> {

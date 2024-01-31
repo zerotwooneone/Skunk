@@ -19,7 +19,11 @@ import { FormsModule } from '@angular/forms';
 export class HomeComponent {
   readonly sensorsConfig: SensorsConfig = environment.sensors;
   readonly dummySensorConfig: SensorConfig = this.sensorsConfig.DummySensor ?? { id: 'unknown' };
+  readonly vocConfig: SensorConfig = environment.sensors.Voc ?? { id: 'unknown' };
+  readonly co2Config: SensorConfig = environment.sensors.Co2 ?? { id: 'unknown' };
   readonly dummySensorValue$: Observable<number | undefined>;
+  readonly voc$: Observable<number | undefined>;
+  readonly co2$: Observable<number | undefined>;
   readonly formaldehydeSensorConfig: SensorConfig = this.sensorsConfig.Formaldehyde;
   readonly formaldehydeSensorValue$: Observable<number>;
   constructor(
@@ -30,27 +34,30 @@ export class HomeComponent {
         console.info('sensor data', p);
         return p;
       });*/
-    const dummySensorPayload = backend.SensorData$.pipe(
-      filter(p => Object.hasOwn(p.Sensors, this.dummySensorConfig.id)),
+    this.dummySensorValue$ = backend.SensorData$.pipe(
+      filter(p => typeof p.DummySensor == 'number'),
       map(p => {
-        return p.Sensors[this.dummySensorConfig.id];
+        return (p.DummySensor as number) * 100;
       }));
-    this.dummySensorValue$ = dummySensorPayload.pipe(
-      map(p => {
-        //incoming value is between 0 and 1
-        //output value from between 0 and 100
-        if (!Object.hasOwn(p, 'Value -999') ||
-          typeof p['Value -999'] !== 'number') {
-          return undefined;
-        }
-        return p['Value -999'] * 100;
-      })
-    );
     this.formaldehydeSensorValue$ = backend.SensorData$.pipe(
       filter(p => (typeof p.Formaldehyde) == 'number'),
       map(p => {
         //console.warn(`Formaldehyde:${(p.Formaldehyde as number)} max:${this.formaldehydeSensorConfig.MaxValue}`);
         return (p.Formaldehyde as number);
+      }),
+      distinct());
+    this.voc$ = backend.SensorData$.pipe(
+      filter(p => (typeof p.Voc) == 'number'),
+      map(p => {
+        //console.warn(`Formaldehyde:${(p.Formaldehyde as number)} max:${this.formaldehydeSensorConfig.MaxValue}`);
+        return (p.Voc as number);
+      }),
+      distinct());
+    this.co2$ = backend.SensorData$.pipe(
+      filter(p => (typeof p.CO2) == 'number'),
+      map(p => {
+        //console.warn(`Formaldehyde:${(p.Formaldehyde as number)} max:${this.formaldehydeSensorConfig.MaxValue}`);
+        return (p.CO2 as number);
       }),
       distinct());
   }
