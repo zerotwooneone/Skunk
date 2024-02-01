@@ -36,6 +36,15 @@ public class Connection : IConnection
         serialPort.DataReceived += OnSerialPortOnDataReceived;
 
         //todo: sense disconnect
+        // serialPort.PinChanged += (s, e) =>
+        // {
+        //     _logger.LogError("Pin changed {PinType}", e.EventType.ToString());
+        // };
+        //
+        // serialPort.Disposed += (s, e) =>
+        // {
+        //     _logger.LogWarning("Serial Port disposed {name}", serialPort.PortName);
+        // };
 
         serialPort.ErrorReceived += (s, e) =>
         {
