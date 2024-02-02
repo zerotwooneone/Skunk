@@ -13,7 +13,7 @@ export const KNOB_VALUE_ACCESSOR: any = {
  * @group Components
  */
 @Component({
-    selector: 'p-knob',
+    selector: 'sk-knob',
     imports: [CommonModule],
     template: `
         <div [ngClass]="containerClass()" [class]="styleClass??''" [ngStyle]="style" [attr.data-pc-name]="'knob'" [attr.data-pc-section]="'root'">
@@ -30,9 +30,9 @@ export const KNOB_VALUE_ACCESSOR: any = {
                 [attr.tabindex]="-1"
                 [attr.data-pc-section]="'svg'"
             >
-                <path [attr.d]="rangePath()" [attr.stroke-width]="strokeWidth" [attr.stroke]="rangeColor" class="p-knob-range"></path>
-                <path [attr.d]="valuePath()" [attr.stroke-width]="strokeWidth" [attr.stroke]="valueColor" class="p-knob-value"></path>
-                <text *ngIf="showValue" [attr.x]="50" [attr.y]="57" text-anchor="middle" [attr.fill]="textColor" class="p-knob-text" [attr.name]="name">{{ valueToDisplay() }}</text>
+                <path [attr.d]="rangePath()" [attr.stroke-width]="strokeWidth" [attr.stroke]="rangeColor" class="sk-knob-range"></path>
+                <path [attr.d]="valuePath()" [attr.stroke-width]="strokeWidth" [attr.stroke]="valueColor" class="sk-knob-value"></path>
+                <text *ngIf="showValue" [attr.x]="50" [attr.y]="57" text-anchor="middle" [attr.fill]="textColor" class="sk-knob-text" [attr.name]="name">{{ valueToDisplay() }}</text>
             </svg>
         </div>
     `,
@@ -180,7 +180,7 @@ export class Knob {
 
     containerClass() {
         return {
-            'p-knob p-component': true,
+            'sk-knob p-component': true,
             'p-disabled': this.disabled
         };
     }

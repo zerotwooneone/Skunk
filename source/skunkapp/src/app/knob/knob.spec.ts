@@ -19,7 +19,7 @@ describe('Knob', () => {
     it('should display by default', () => {
         fixture.detectChanges();
 
-        const knobEl = fixture.debugElement.query(By.css('.p-knob'));
+        const knobEl = fixture.debugElement.query(By.css('.sk-knob'));
         expect(knobEl.nativeElement).toBeTruthy();
     });
 });

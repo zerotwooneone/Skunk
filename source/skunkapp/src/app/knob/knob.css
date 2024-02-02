@@ -4,16 +4,16 @@
     }
 }
 @layer primeng {
-    .p-knob-range {
+    .sk-knob-range {
         fill: none;
         transition: stroke 0.1s ease-in;
     }
-    .p-knob-value {
+    .sk-knob-value {
         animation-name: dash-frame;
         animation-fill-mode: forwards;
         fill: none;
     }
-    .p-knob-text {
+    .sk-knob-text {
         font-size: 1.3rem;
         text-align: center;
     }
