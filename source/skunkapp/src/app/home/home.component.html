@@ -5,20 +5,17 @@
     </div>
     <div class="sensor-container">
         <h2>Formaldehyde*</h2>
-        <p-knob [ngModel]="(formaldehydeSensorValue$|async)" [max]="this.formaldehydeSensorConfig.MaxValue ?? 1"
-            [readonly]="true">
+        <p-knob [ngModel]="(formaldehydeSensorValue$|async)" [max]="this.formaldehydeSensorConfig.MaxValue ?? 1">
         </p-knob>
     </div>
     <div class="sensor-container">
         <h2>VOC ppb</h2>
-        <p-knob [ngModel]="(voc$|async)" [max]="this.vocConfig.MaxValue ?? 1"
-            [readonly]="true">
+        <p-knob [ngModel]="(voc$|async)" [max]="this.vocConfig.MaxValue ?? 1">
         </p-knob>
     </div>
     <div class="sensor-container">
         <h2>CO2 ppm</h2>
-        <p-knob [ngModel]="(co2$|async)" [max]="this.co2Config.MaxValue ?? 1"
-            [readonly]="true">
+        <p-knob [ngModel]="(co2$|async)" [max]="this.co2Config.MaxValue ?? 1">
         </p-knob>
     </div>
 </div>

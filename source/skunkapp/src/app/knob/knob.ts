@@ -22,18 +22,12 @@ export const KNOB_VALUE_ACCESSOR: any = {
                 role="slider"
                 [style.width]="size + 'px'"
                 [style.height]="size + 'px'"
-                (click)="onClick($event)"
-                (keydown)="onKeyDown($event)"
-                (mousedown)="onMouseDown($event)"
-                (mouseup)="onMouseUp($event)"
-                (touchstart)="onTouchStart($event)"
-                (touchend)="onTouchEnd($event)"
                 [attr.aria-valuemin]="min"
                 [attr.aria-valuemax]="max"
                 [attr.aria-valuenow]="_value"
                 [attr.aria-labelledby]="ariaLabelledBy"
                 [attr.aria-label]="ariaLabel"
-                [attr.tabindex]="readonly || disabled ? -1 : tabindex"
+                [attr.tabindex]="-1"
                 [attr.data-pc-section]="'svg'"
             >
                 <path [attr.d]="rangePath()" [attr.stroke-width]="strokeWidth" [attr.stroke]="rangeColor" class="p-knob-range"></path>
@@ -138,11 +132,6 @@ export class Knob {
      */
     @Input() showValue: boolean = true;
     /**
-     * When present, it specifies that the component value cannot be edited.
-     * @group Props
-     */
-    @Input() readonly: boolean = false;
-    /**
      * Callback to invoke on value change.
      * @param {number} value - New value.
      * @group Emits
@@ -161,170 +150,14 @@ export class Knob {
 
     value: number = 0;
 
-    windowMouseMoveListener: VoidListener;
-
-    windowMouseUpListener: VoidListener;
-
-    windowTouchMoveListener: VoidListener;
-
-    windowTouchEndListener: VoidListener;
-
     onModelChange: Function = () => {};
 
     onModelTouched: Function = () => {};
 
-    constructor(@Inject(DOCUMENT) private document: Document, private renderer: Renderer2, private cd: ChangeDetectorRef, private el: ElementRef) {}
+    constructor(private cd: ChangeDetectorRef) {}
 
     mapRange(x: number, inMin: number, inMax: number, outMin: number, outMax: number) {
         return ((x - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
-    }
-
-    onClick(event: MouseEvent) {
-        if (!this.disabled && !this.readonly) {
-            this.updateValue(event.offsetX, event.offsetY);
-        }
-    }
-
-    updateValue(offsetX: number, offsetY: number) {
-        let dx = offsetX - this.size / 2;
-        let dy = this.size / 2 - offsetY;
-        let angle = Math.atan2(dy, dx);
-        let start = -Math.PI / 2 - Math.PI / 6;
-        this.updateModel(angle, start);
-    }
-
-    updateModel(angle: number, start: number) {
-        let mappedValue;
-        if (angle > this.maxRadians) mappedValue = this.mapRange(angle, this.minRadians, this.maxRadians, this.min, this.max);
-        else if (angle < start) mappedValue = this.mapRange(angle + 2 * Math.PI, this.minRadians, this.maxRadians, this.min, this.max);
-        else return;
-
-        let newValue = Math.round((mappedValue - this.min) / this.step) * this.step + this.min;
-        this.value = newValue;
-        this.onModelChange(this.value);
-        this.onChange.emit(this.value);
-    }
-
-    onMouseDown(event: MouseEvent) {
-        if (!this.disabled && !this.readonly) {
-            const window = this.document.defaultView || 'window';
-            this.windowMouseMoveListener = this.renderer.listen(window, 'mousemove', this.onMouseMove.bind(this));
-            this.windowMouseUpListener = this.renderer.listen(window, 'mouseup', this.onMouseUp.bind(this));
-            event.preventDefault();
-        }
-    }
-
-    onMouseUp(event: MouseEvent) {
-        if (!this.disabled && !this.readonly) {
-            if (this.windowMouseMoveListener) {
-                this.windowMouseMoveListener();
-                this.windowMouseUpListener = null;
-            }
-
-            if (this.windowMouseUpListener) {
-                this.windowMouseUpListener();
-                this.windowMouseMoveListener = null;
-            }
-            event.preventDefault();
-        }
-    }
-
-    onTouchStart(event: TouchEvent) {
-        if (!this.disabled && !this.readonly) {
-            const window = this.document.defaultView || 'window';
-            this.windowTouchMoveListener = this.renderer.listen(window, 'touchmove', this.onTouchMove.bind(this));
-            this.windowTouchEndListener = this.renderer.listen(window, 'touchend', this.onTouchEnd.bind(this));
-            event.preventDefault();
-        }
-    }
-
-    onTouchEnd(event: TouchEvent) {
-        if (!this.disabled && !this.readonly) {
-            if (this.windowTouchMoveListener) {
-                this.windowTouchMoveListener();
-            }
-            if (this.windowTouchEndListener) {
-                this.windowTouchEndListener();
-            }
-            this.windowTouchMoveListener = null;
-            this.windowTouchEndListener = null;
-            event.preventDefault();
-        }
-    }
-
-    onMouseMove(event: MouseEvent) {
-        if (!this.disabled && !this.readonly) {
-            this.updateValue(event.offsetX, event.offsetY);
-            event.preventDefault();
-        }
-    }
-
-    onTouchMove(event: Event) {
-        if (!this.disabled && !this.readonly && event instanceof TouchEvent && event.touches.length === 1) {
-            const rect = this.el.nativeElement.children[0].getBoundingClientRect();
-            const touch = event.targetTouches.item(0);
-            if (touch) {
-                const offsetX = touch.clientX - rect.left;
-                const offsetY = touch.clientY - rect.top;
-                this.updateValue(offsetX, offsetY);
-            }
-        }
-    }
-
-    updateModelValue(newValue:number) {
-        if (newValue > this.max) this.value = this.max;
-        else if (newValue < this.min) this.value = this.min;
-        else this.value = newValue;
-
-        this.onModelChange(this.value);
-        this.onChange.emit(this.value);
-    }
-
-    onKeyDown(event: KeyboardEvent) {
-        if (!this.disabled && !this.readonly) {
-            switch (event.code) {
-                case 'ArrowRight':
-
-                case 'ArrowUp': {
-                    event.preventDefault();
-                    this.updateModelValue(this._value + 1);
-                    break;
-                }
-
-                case 'ArrowLeft':
-
-                case 'ArrowDown': {
-                    event.preventDefault();
-                    this.updateModelValue(this._value - 1);
-                    break;
-                }
-
-                case 'Home': {
-                    event.preventDefault();
-                    this.updateModelValue(this.min);
-
-                    break;
-                }
-
-                case 'End': {
-                    event.preventDefault();
-                    this.updateModelValue(this.max);
-                    break;
-                }
-
-                case 'PageUp': {
-                    event.preventDefault();
-                    this.updateModelValue(this._value + 10);
-                    break;
-                }
-
-                case 'PageDown': {
-                    event.preventDefault();
-                    this.updateModelValue(this._value - 10);
-                    break;
-                }
-            }
-        }
     }
 
     writeValue(value: any): void {
