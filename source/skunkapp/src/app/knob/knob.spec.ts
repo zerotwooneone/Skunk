@@ -1,18 +1,18 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { Knob, KnobModule } from './knob';
+import { KnobComponent, KnobModule } from './knob';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 
 describe('Knob', () => {
-    let knob: Knob;
-    let fixture: ComponentFixture<Knob>;
+    let knob: KnobComponent;
+    let fixture: ComponentFixture<KnobComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [NoopAnimationsModule, KnobModule]
         });
 
-        fixture = TestBed.createComponent(Knob);
+        fixture = TestBed.createComponent(KnobComponent);
         knob = fixture.componentInstance;
     });
 

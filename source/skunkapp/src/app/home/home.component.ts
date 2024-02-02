@@ -7,12 +7,12 @@ import { environment } from '../../environments/environment';
 import { SensorsConfig, SensorConfig } from "../../environments/SensorsConfig";
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { FormsModule } from '@angular/forms';
-import { Knob } from '../knob/knob';
+import { KnobComponent } from '../knob/knob';
 
 @Component({
   selector: 'sk-home',
   standalone: true,
-  imports: [TestTextComponent, CommonModule, MatProgressBarModule, Knob, FormsModule],
+  imports: [TestTextComponent, CommonModule, MatProgressBarModule, KnobComponent, FormsModule],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })

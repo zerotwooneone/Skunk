@@ -5,7 +5,7 @@ import { VoidListener } from 'primeng/ts-helpers';
 
 export const KNOB_VALUE_ACCESSOR: any = {
     provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => Knob),
+    useExisting: forwardRef(() => KnobComponent),
     multi: true
 };
 /**
@@ -45,7 +45,7 @@ export const KNOB_VALUE_ACCESSOR: any = {
         class: 'p-element'
     }
 })
-export class Knob {
+export class KnobComponent {
     /**
      * Style class of the component.
      * @group Props
