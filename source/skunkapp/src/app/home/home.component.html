@@ -15,12 +15,12 @@
     </div>
     <div class="sensor-container">
         <h2>CO2 ppm</h2>
-        <sk-knob [ngModel]="(co2$|async)" [max]="this.co2Config.MaxValue ?? 1">
+        <sk-knob [ngModel]="(co2$|async)" [max]="this.co2Config.MaxValue ?? 1" [marker1]="this.highestCo2" marker1Color="#FFF3">
         </sk-knob>
     </div>
 </div>
 <div>
     <p>
-        <b>*</b>This is an unit-less value which only indicates relative values
+        <b>*</b>This is an unitless value which only indicates relative values
     </p>
 </div>

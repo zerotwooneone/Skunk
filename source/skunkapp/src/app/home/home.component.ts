@@ -26,6 +26,7 @@ export class HomeComponent {
   readonly co2$: Observable<number | undefined>;
   readonly formaldehydeSensorConfig: SensorConfig = this.sensorsConfig.Formaldehyde;
   readonly formaldehydeSensorValue$: Observable<number>;
+  highestCo2: number|undefined;
   constructor(
     private readonly backend: BackendService
   ) {
@@ -57,7 +58,12 @@ export class HomeComponent {
       filter(p => (typeof p.CO2) == 'number'),
       map(p => {
         //console.warn(`Formaldehyde:${(p.Formaldehyde as number)} max:${this.formaldehydeSensorConfig.MaxValue}`);
-        return (p.CO2 as number);
+        const newCo2 = p.CO2 as number;
+        if(newCo2 > (this.highestCo2 ?? -1)){
+          this.highestCo2 = newCo2;
+        }
+        
+        return newCo2;
       }),
       distinct());
   }

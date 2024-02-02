@@ -29,6 +29,7 @@ export const KNOB_VALUE_ACCESSOR: any = {
                 [attr.tabindex]="-1"
                 [attr.data-pc-section]="'svg'"
             >
+                <circle [attr.cx]="marker1X()" [attr.cy]="marker1Y()" [attr.r]="marker1Radius()" [attr.fill]="marker1Color" class="sk-knob-marker1"></circle>
                 <path [attr.d]="rangePath()" [attr.stroke-width]="strokeWidth" [attr.stroke]="rangeColor" class="sk-knob-range"></path>
                 <path [attr.d]="valuePath()" [attr.stroke-width]="strokeWidth" [attr.stroke]="valueColor" class="sk-knob-value"></path>
                 <text *ngIf="showValue" [attr.x]="50" [attr.y]="57" text-anchor="middle" [attr.fill]="textColor" class="sk-knob-text" [attr.name]="name">{{ valueToDisplay() }}</text>
@@ -80,6 +81,11 @@ export class KnobComponent {
      * @group Props
      */
     @Input() rangeColor: string = 'var(--surface-border, LightGray)';
+    /**
+     * Background color of the MaxSeen.
+     * @group Props
+     */
+    @Input() marker1Color: string = 'var(--marker1-color, Blue)';
     /**
      * Color of the value text.
      * @group Props
@@ -149,6 +155,12 @@ export class KnobComponent {
 
     value: number = 0;
 
+    /**
+     * The location of marker1 between min and max
+     * @group Props
+     */
+    @Input() marker1: number|undefined = undefined;
+
     onModelChange: Function = () => {};
 
     onModelTouched: Function = () => {};
@@ -190,7 +202,7 @@ export class KnobComponent {
 
     valuePath() {
         return `M ${this.zeroX()} ${this.zeroY()} A ${this.radius} ${this.radius} 0 ${this.largeArc()} ${this.sweep()} ${this.valueX()} ${this.valueY()}`;
-    }
+    }    
 
     zeroRadians() {
         if (this.min > 0 && this.max > 0) return this.mapRange(this.min, this.min, this.max, this.minRadians, this.maxRadians);
@@ -199,6 +211,12 @@ export class KnobComponent {
 
     valueRadians() {
         return this.mapRange(this._value, this.min, this.max, this.minRadians, this.maxRadians);
+    }
+
+    marker1Radians() {
+        return (typeof this._marker1Value == 'number') 
+            ? this.mapRange(this._marker1Value, this.min, this.max, this.minRadians, this.maxRadians)
+            : undefined;
     }
 
     minX() {
@@ -233,6 +251,26 @@ export class KnobComponent {
         return this.midY - Math.sin(this.valueRadians()) * this.radius;
     }
 
+    marker1X() {
+        const rad = this.marker1Radians();
+        return (typeof rad =='number') 
+            ? this.midX + Math.cos(rad) * this.radius
+            : undefined;
+    }
+
+    marker1Y() {
+        const rad = this.marker1Radians();
+        return (typeof rad == 'number')
+            ? this.midY - Math.sin(rad) * this.radius
+            : undefined;
+    }
+
+    marker1Radius(){
+        return (typeof this.marker1 == 'number') 
+            ? (3*this.strokeWidth)/4
+            : 0;
+    }
+
     largeArc() {
         return Math.abs(this.zeroRadians() - this.valueRadians()) < Math.PI ? 0 : 1;
     }
@@ -247,5 +285,9 @@ export class KnobComponent {
 
     get _value(): number {
         return this.value != null ? this.value : this.min;
+    }
+
+    get _marker1Value(): number|undefined {
+        return (typeof this.marker1 == 'number') ? this.marker1 : undefined;
     }
 }
