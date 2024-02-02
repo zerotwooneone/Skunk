@@ -1,6 +1,7 @@
 # Skunk
 
 Air Quality Sensor Package
+![Alt text](skunk2.gif)
 
 ## Build
 
