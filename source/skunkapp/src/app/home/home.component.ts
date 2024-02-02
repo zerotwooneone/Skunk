@@ -8,6 +8,7 @@ import { SensorsConfig, SensorConfig } from "../../environments/SensorsConfig";
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { FormsModule } from '@angular/forms';
 import { KnobComponent } from '../knob/knob';
+import { StatsHack } from './StatsHack';
 
 @Component({
   selector: 'sk-home',
@@ -26,10 +27,13 @@ export class HomeComponent {
   readonly co2$: Observable<number | undefined>;
   readonly formaldehydeSensorConfig: SensorConfig = this.sensorsConfig.Formaldehyde;
   readonly formaldehydeSensorValue$: Observable<number>;
-  highestCo2: number|undefined;
+  readonly co2Stats: StatsHack;
+  readonly vocStats: StatsHack;
   constructor(
     private readonly backend: BackendService
   ) {
+    this.co2Stats = new StatsHack(400);
+    this.vocStats = new StatsHack(400);
     /*backend.SensorData$.subscribe(
       p => {
         console.info('sensor data', p);
@@ -50,8 +54,9 @@ export class HomeComponent {
     this.voc$ = backend.SensorData$.pipe(
       filter(p => (typeof p.Voc) == 'number'),
       map(p => {
-        //console.warn(`Formaldehyde:${(p.Formaldehyde as number)} max:${this.formaldehydeSensorConfig.MaxValue}`);
-        return (p.Voc as number);
+        const newVoc = p.Voc as number;
+        this.vocStats.addSample(newVoc);
+        return newVoc;
       }),
       distinct());
     this.co2$ = backend.SensorData$.pipe(
@@ -59,12 +64,12 @@ export class HomeComponent {
       map(p => {
         //console.warn(`Formaldehyde:${(p.Formaldehyde as number)} max:${this.formaldehydeSensorConfig.MaxValue}`);
         const newCo2 = p.CO2 as number;
-        if(newCo2 > (this.highestCo2 ?? -1)){
-          this.highestCo2 = newCo2;
-        }
+        this.co2Stats.addSample(newCo2);
         
         return newCo2;
       }),
       distinct());
   }
 }
+
+
