@@ -29,11 +29,13 @@ export class HomeComponent {
   readonly formaldehydeSensorValue$: Observable<number>;
   readonly co2Stats: StatsHack;
   readonly vocStats: StatsHack;
+  readonly formStats: StatsHack;  
   constructor(
     private readonly backend: BackendService
   ) {
     this.co2Stats = new StatsHack(400);
     this.vocStats = new StatsHack(400);
+    this.formStats = new StatsHack(400);
     /*backend.SensorData$.subscribe(
       p => {
         console.info('sensor data', p);
@@ -47,8 +49,9 @@ export class HomeComponent {
     this.formaldehydeSensorValue$ = backend.SensorData$.pipe(
       filter(p => (typeof p.Formaldehyde) == 'number'),
       map(p => {
-        //console.warn(`Formaldehyde:${(p.Formaldehyde as number)} max:${this.formaldehydeSensorConfig.MaxValue}`);
-        return (p.Formaldehyde as number);
+        const formValue = p.Formaldehyde as number;
+        this.formStats.addSample(formValue);
+        return formValue;
       }),
       distinct());
     this.voc$ = backend.SensorData$.pipe(

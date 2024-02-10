@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import * as signalR from "@microsoft/signalr";
 import { environment } from "../../environments/environment"
-import { Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { SensorPayload } from './SensorPayload';
 import { SensorConfig, SensorsConfig } from '../../environments/SensorsConfig';
 
@@ -13,16 +13,19 @@ export class BackendService {
   readonly sensorsConfig: SensorsConfig = environment.sensors;
   readonly dummySensorConfig: SensorConfig = this.sensorsConfig.DummySensor ?? { id: 'unknown' };
 
-  private _connected: boolean = false;
   private _connection: signalR.HubConnection | undefined;
   readonly SensorData$: Observable<SensorPayload>;
   private readonly _sensorData: Subject<SensorPayload>;
+  private readonly _connected: BehaviorSubject<boolean>;
+  readonly connected$: Observable<boolean>;
   get connected(): boolean {
-    return this._connected;
+    return this._connected.value;
   }
   constructor() {
+    this._connected = new BehaviorSubject(false);
+    this.connected$ = this._connected.asObservable();
     this._sensorData = new Subject<SensorPayload>();
-    this.SensorData$ = this._sensorData;
+    this.SensorData$ = this._sensorData.asObservable();
     const defaultBuilder = new signalR.HubConnectionBuilder()
       .withAutomaticReconnect()
       .withKeepAliveInterval(5000)
@@ -34,19 +37,19 @@ export class BackendService {
     const builder = timeoutBuilder;
     this._connection = builder.build();
     this._connection.onclose(error => {
-      this._connected = false;
+      this._connected.next(false);
       console.warn(`hub connection closed.`, error);
     });
     this._connection.onreconnected(connectionId => {
       console.info('reconnected', connectionId);
-      this._connected = true;
+      this._connected.next(true);
     })
   }
 
   async connect(): Promise<boolean> {
-    if (this._connected) {
+    if (this.connected) {
       console.warn(`already connected`);
-      return this._connected;
+      return this.connected;
     }
     if (!this._connection) {
       return false;
@@ -63,9 +66,8 @@ export class BackendService {
     } catch (exception) {
       console.error("error registering handlers", exception);
     }
-
-    this._connected = true;
-    return this._connected;
+    this._connected.next(true);
+    return this.connected;
   }
 
   private registerHandlers(): void {
@@ -112,7 +114,7 @@ export class BackendService {
   }
 
   async ping(): Promise<boolean> {
-    if (!this._connected) {
+    if (!this.connected) {
       return false;
     }
     if (!this._connection) {

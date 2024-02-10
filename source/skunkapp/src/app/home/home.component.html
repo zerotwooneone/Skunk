@@ -5,7 +5,9 @@
     </div>
     <div class="sensor-container">
         <h2>Formaldehyde*</h2>
-        <sk-knob [ngModel]="(formaldehydeSensorValue$|async)" [max]="this.formaldehydeSensorConfig.MaxValue ?? 1">
+        <sk-knob [ngModel]="(formaldehydeSensorValue$|async)" [max]="this.formaldehydeSensorConfig.MaxValue ?? 1"
+            [marker1]="this.formStats.max" 
+            marker1Color="#F006">
         </sk-knob>
     </div>
     <div class="sensor-container">
