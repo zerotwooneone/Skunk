@@ -1,6 +1,7 @@
 # Skunk
 
 Air Quality Sensor Package
+
 ![Animated Sensors](skunk2.gif)
 
 - The red circle is the max value that has been seen
