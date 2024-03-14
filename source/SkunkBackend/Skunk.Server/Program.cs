@@ -4,7 +4,9 @@ using Skunk.Server.Serial;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration.AddJsonFile("skunk.json");
+builder.Configuration
+    .AddJsonFile("Config/skunk.json",false)
+    .AddJsonFile("Config/secrets.json", false);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews()
