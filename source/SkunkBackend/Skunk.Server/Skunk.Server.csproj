@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Skunk.MongoDb\Skunk.MongoDb.csproj" />
     <ProjectReference Include="..\Skunk.Serial\Skunk.Serial.csproj" />
   </ItemGroup>
 

@@ -1,5 +1,6 @@
 ﻿using Skunk.Server.Hubs;
 using Skunk.Server.Json;
+using Skunk.Server.Mongo;
 using Skunk.Server.Serial;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,6 +35,7 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddSerial(builder.Configuration);
 builder.Services.AddHubs();
+builder.Services.AddMongo(builder.Configuration);
 
 var app = builder.Build();
 
