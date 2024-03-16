@@ -3,10 +3,11 @@ using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using Computer.Domain.Bus.Reactive.Contracts;
 using Microsoft.Extensions.Options;
 using Skunk.Serial.Configuration;
 using Skunk.Serial.Interfaces;
-using Skunk.Server.Hubs;
+using Skunk.Server.DomainBus;
 
 namespace Skunk.Server.Serial
 {
@@ -15,28 +16,27 @@ namespace Skunk.Server.Serial
         private readonly IConnectionFactory _connectionFactory;
         private readonly SerialConfiguration _serialConfiguration;
         private readonly ILogger<SerialLifetimeService> _logger;
-        private readonly IFrontendService _frontendService;
+        private readonly IReactiveBus _bus;
         private IConnection? _connection;
         private readonly Subject<string> _serialStrings;
-        private IDisposable? _stringSubscription;
+        private readonly CompositeDisposable _subscriptions;
         private readonly IScheduler _scheduler;
 
         public SerialLifetimeService(
             IConnectionFactory connectionFactory,
             IOptions<SerialConfiguration> serialConfiguration,
             ILogger<SerialLifetimeService> logger,
-            IFrontendService frontendService)
+            IReactiveBus bus)
         {
             _connectionFactory = connectionFactory;
             _serialConfiguration = serialConfiguration.Value;
             _logger = logger;
-            _frontendService = frontendService;
+            _bus = bus;
 
             _serialStrings = new Subject<string>();
             
             _scheduler = new EventLoopScheduler();
-            
-            _stringSubscription = ThrottleStrings();
+            _subscriptions = new CompositeDisposable();
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -54,6 +54,8 @@ namespace Skunk.Server.Serial
 
             _connection = connection;
             //todo: implement a method to keep the connection alive
+            
+            _subscriptions.Add(ThrottleStrings());
             
             return Task.CompletedTask;
         }
@@ -104,7 +106,7 @@ namespace Skunk.Server.Serial
                 
                 //one async at a time, in order of arrival 
                 .Concat();
-
+            
             var errorHandler = asyncObs
                 .Where(n => n.Kind == NotificationKind.OnError)
                 .Subscribe(n =>
@@ -123,15 +125,7 @@ namespace Skunk.Server.Serial
 
         private async Task OnThrottledString(IReadOnlyList<string[]> values)
         {
-            var unixms = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-            const string valueKey = "value";
-            Dictionary<string,SensorValues> dict = new Dictionary<string, SensorValues>
-            {
-                {"timeStamp", new SensorValues
-                {
-                    {valueKey, Convert.ToSingle(unixms)}
-                }}
-            };
+             var unixms = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             foreach (var value in values)
             {
                 if (!float.TryParse(value[1], out var fValue))
@@ -139,20 +133,17 @@ namespace Skunk.Server.Serial
                     continue;
                 }
                 
-                dict[value[0]] = new SensorValues
+                var payload = new SensorReading
                 {
-                    {valueKey, fValue}
+                    name = value[0],
+                    value = fValue,
+                    utcUnixMs = unixms
                 };
+                await _bus.Publish("sensorRead", payload);
             }
-            
-            var sensorPayload = new SensorPayload()
-            {
-                Sensors = dict,
-            };
-            await _frontendService.SendSensorPayload(sensorPayload);
         }
 
-        private async void OnSerialString(object? sender, string e)
+        private void OnSerialString(object? sender, string e)
         {
             _serialStrings.OnNext(e);
         }
@@ -160,6 +151,8 @@ namespace Skunk.Server.Serial
         public Task StopAsync(CancellationToken cancellationToken)
         {
             CleanupConnection();
+            
+            _subscriptions.Dispose();
 
             return Task.CompletedTask;
         }

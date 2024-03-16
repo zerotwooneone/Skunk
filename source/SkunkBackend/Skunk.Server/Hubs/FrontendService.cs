@@ -13,6 +13,8 @@ public class FrontendService : IFrontendService
     {
         _hubContext = hubContext;
         _logger = logger;
+        
+        //todo: need to subscribe to send sensor data
     }
     public async Task SendSensorPayload(SensorPayload payload)
     {

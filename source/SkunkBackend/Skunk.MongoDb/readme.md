@@ -3,7 +3,7 @@
 
 Start the database
 
->  docker run -p 27017:27017 skunk-mongo
+>  docker run -v ~/data:/data/db -p 27017:27017 skunk-mongo
 
 ### Running Backend
 
