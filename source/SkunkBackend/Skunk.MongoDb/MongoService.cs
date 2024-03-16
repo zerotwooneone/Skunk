@@ -50,16 +50,30 @@ public class MongoService : IMongoService
             return;
         }
 
-        const string collectionName = "sensors";
-        var collection = db.GetCollection<BsonDocument>(collectionName);
+        var utcUnixMs = (utcTimestamp ?? DateTimeOffset.UtcNow).ToUnixTimeMilliseconds();
 
-        var document = new BsonDocument(new Dictionary<string, object>
+        const long millisecondsPerHour=60*60*1000;
+        
+        //this truncates the non-hour milliseconds from the value;
+        var utcHour = (utcUnixMs / millisecondsPerHour) * millisecondsPerHour;
+        
+        var updateFilter = new BsonDocumentFilterDefinition<BsonDocument>(new BsonDocument
         {
             {"type", type},
-            {"value", value},
-            {"when", (utcTimestamp ?? DateTimeOffset.UtcNow).ToUnixTimeMilliseconds()}
+            {"utcHour", utcHour}
         });
-        await collection.InsertOneAsync(document);
+
+        var msSinceHour = utcUnixMs % millisecondsPerHour;
+        var update = Builders<BsonDocument>.Update.Push("values", new BsonDocument
+        {
+            {"value", value},
+            {"msSinceHour", msSinceHour}
+        });
+        var updateOptions = new FindOneAndUpdateOptions<BsonDocument>
+        {
+            IsUpsert = true
+        };
+        await db.GetCollection<BsonDocument>("hourlySensors").FindOneAndUpdateAsync(updateFilter, update, updateOptions);
     }
 
     private string GetConnectionString()
