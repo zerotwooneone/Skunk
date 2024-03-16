@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
+using Skunk.MongoDb;
 using Skunk.MongoDb.Interfaces;
 
 namespace Skunk.Server.Mongo
@@ -20,6 +21,7 @@ namespace Skunk.Server.Mongo
                     }
                     return c;
                 })
+                .AddSingleton<IMongoService, MongoService>()
                 .AddHostedService<MongoLifetimeService>();
         }
     }
