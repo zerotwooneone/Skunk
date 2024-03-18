@@ -115,15 +115,28 @@ public class MongoService : IMongoService
             return Enumerable.Empty<SensorValue>();
         }
         
-        return allSensors.Select(bucketDto =>
+        return allSensors.SelectMany(bucketDto =>
         {
+            if (bucketDto.values == null ||
+                string.IsNullOrWhiteSpace(bucketDto.type) ||
+                bucketDto.utcHour == null)
+            {
+                return Array.Empty<SensorValue>();
+            }
             //todo: should sort, but for now we just guess that the last one is the right one
             var lastValue = bucketDto.values.Last();
-            return new SensorValue
+            if (lastValue.msSinceHour == null ||
+                lastValue.value == null)
             {
-                Name = bucketDto.type,
-                TimeStamp = bucketDto.utcHour + lastValue.msSinceHour,
-                Value = lastValue.value
+                return Array.Empty<SensorValue>();
+            }
+            return new[]{ 
+                new SensorValue
+                {
+                    Name = bucketDto.type,
+                    TimeStamp = bucketDto.utcHour.Value + lastValue.msSinceHour.Value,
+                    Value = lastValue.value.Value
+                }
             };
         }).ToArray();
     }
