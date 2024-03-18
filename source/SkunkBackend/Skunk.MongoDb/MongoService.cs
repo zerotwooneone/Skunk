@@ -1,5 +1,7 @@
-﻿using MongoDB.Bson;
+﻿using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Driver.Linq;
 using Skunk.MongoDb.Interfaces;
 
 namespace Skunk.MongoDb;
@@ -7,13 +9,32 @@ namespace Skunk.MongoDb;
 public class MongoService : IMongoService
 {
     private readonly IMongoConfig _config;
+    private readonly ILogger<MongoService> _logger;
     private readonly Lazy<MongoClient> _client;
+    private readonly Lazy<IMongoDatabase> _database;
+    private readonly Lazy<IMongoCollection<HourlySensorBucketDto>> _hourlyCollection;
     const string DbName="skunk";
 
-    public MongoService(IMongoConfig config)
+    public MongoService(
+        IMongoConfig config,
+        ILogger<MongoService> logger)
     {
         _config = config ?? throw new ArgumentException("config cannot be null");
+        _logger = logger;
         _client = new Lazy<MongoClient>(() => new MongoClient(GetConnectionString()));
+        _database = new Lazy<IMongoDatabase>(() =>
+        {
+            var db = _client.Value.GetDatabase(DbName);
+
+            if (db == null)
+            {
+                _logger.LogWarning("Database was null name:{DbName}", DbName);
+            }
+
+            return db;
+        });
+        _hourlyCollection = new Lazy<IMongoCollection<HourlySensorBucketDto>>(() =>
+            _database.Value.GetCollection<HourlySensorBucketDto>("hourlySensors"));
     }
     public async Task UpdateStartupCount()
     {
@@ -22,6 +43,7 @@ public class MongoService : IMongoService
 
         if (db == null)
         {
+            _logger.LogWarning("Database was null name:{DbName}", DbName);
             return;
         }
 
@@ -43,37 +65,67 @@ public class MongoService : IMongoService
 
     public async Task AddSensorValue(string type, float value, DateTimeOffset? utcTimestamp = null)
     {
-        var db = _client.Value.GetDatabase(DbName);
-
-        if (db == null)
-        {
-            return;
-        }
-
         var utcUnixMs = (utcTimestamp ?? DateTimeOffset.UtcNow).ToUnixTimeMilliseconds();
 
         const long millisecondsPerHour=60*60*1000;
         
         //this truncates the non-hour milliseconds from the value;
         var utcHour = (utcUnixMs / millisecondsPerHour) * millisecondsPerHour;
+
         
-        var updateFilter = new BsonDocumentFilterDefinition<BsonDocument>(new BsonDocument
+        var updateFilter = new ObjectFilterDefinition<HourlySensorBucketDto>(new HourlySensorBucketDto
         {
-            {"type", type},
-            {"utcHour", utcHour}
+            type = type,
+            utcHour = utcHour
         });
 
         var msSinceHour = utcUnixMs % millisecondsPerHour;
-        var update = Builders<BsonDocument>.Update.Push("values", new BsonDocument
+        var update = Builders<HourlySensorBucketDto>.Update.Push("values", new HourlySensorValueDto()
         {
-            {"value", value},
-            {"msSinceHour", msSinceHour}
+            value= value,
+            msSinceHour= msSinceHour
         });
-        var updateOptions = new FindOneAndUpdateOptions<BsonDocument>
+        var updateOptions = new FindOneAndUpdateOptions<HourlySensorBucketDto>
         {
             IsUpsert = true
         };
-        await db.GetCollection<BsonDocument>("hourlySensors").FindOneAndUpdateAsync(updateFilter, update, updateOptions);
+        await _hourlyCollection.Value.FindOneAndUpdateAsync(updateFilter, update, updateOptions);
+    }
+
+    public async Task<IEnumerable<SensorValue>> GetLatestSensorValues()
+    {
+        var document = Queryable.OrderByDescending(_hourlyCollection.Value
+                .AsQueryable(), b=>b.utcHour)
+            .FirstOrDefault();
+
+        if (document == null)
+        {
+            return Enumerable.Empty<SensorValue>();    
+        }
+        
+        var targetHour = document.utcHour;
+
+        var allSensors = await _hourlyCollection.Value
+            .AsQueryable()
+            .Where(b => b.utcHour == targetHour)
+            .ToListAsync();
+
+        if (allSensors == null)
+        {
+            return Enumerable.Empty<SensorValue>();
+        }
+        
+        return allSensors.Select(bucketDto =>
+        {
+            //todo: should sort, but for now we just guess that the last one is the right one
+            var lastValue = bucketDto.values.Last();
+            return new SensorValue
+            {
+                Name = bucketDto.type,
+                TimeStamp = bucketDto.utcHour + lastValue.msSinceHour,
+                Value = lastValue.value
+            };
+        }).ToArray();
     }
 
     private string GetConnectionString()

@@ -3,6 +3,7 @@ using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using Computer.Domain.Bus.Reactive.Contracts;
+using MongoDB.Bson.Serialization.Conventions;
 using Skunk.MongoDb.Interfaces;
 using Skunk.Server.DomainBus;
 using Skunk.Server.Reactive;
@@ -31,9 +32,13 @@ public class MongoLifetimeService : IHostedService
     }
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        foreach (var disposable in Subscribe())
+        // Allows automapping of the camelCase database fields to models 
+        var camelCaseConvention = new ConventionPack { new CamelCaseElementNameConvention() };
+        ConventionRegistry.Register("CamelCase", camelCaseConvention, type => true);
+        
+        foreach (var subscription in Subscribe())
         {
-            _disposables.Add(disposable);
+            _disposables.Add(subscription);
         }
         
         await _mongoService.UpdateStartupCount();
@@ -49,31 +54,68 @@ public class MongoLifetimeService : IHostedService
     {
         var result = new List<IDisposable>();
 
-        var notificationObs = _bus.Subscribe<SensorReading>("sensorRead")
+        result.Add(Subscribe<SensorReading>("sensorRead", OnSensorRead, "Exception in sensor reading pipeline"));
+        result.Add(Subscribe("PeriodicSensorCheck", OnPeriodicSensorCheck, "Exception in sensor check pipeline"));
+            
+        return result;
+    }
+
+    private async Task OnPeriodicSensorCheck()
+    {
+        var latestSensorValues = await _mongoService.GetLatestSensorValues();
+        if (latestSensorValues == null)
+        {
+            return;
+        }
+
+        var sensorValues = latestSensorValues as SensorValue[] ?? latestSensorValues.ToArray();
+        if (!sensorValues.Any())
+        {
+            return;
+        }
+        var sensorReadings = sensorValues.Select(v=>new SensorReading
+        {
+            name = v.Name,
+            value = v.Value,
+            utcUnixMs = v.TimeStamp
+        }).ToArray();
+
+        await _bus.Publish("LatestSensorValues", (IEnumerable<SensorReading>)sensorReadings);
+    }
+
+    private IDisposable Subscribe<T>(string subject, Func<T, Task> handler, string errorMessage)
+    {
+        var notificationObs = _bus.Subscribe<T>(subject)
             .ObserveOn(_scheduler)
             .Where(o=>o.Param != null)
-            .Select(o=>Observable.FromAsync(async ()=> await OnSensorRead(o.Param!)))
+            .Select(o=>Observable.FromAsync(async ()=> await handler(o.Param!)))
+            .Concat()
             .Materialize();
-        var successObs = notificationObs
-            .Where(n => n.Kind == NotificationKind.OnNext)
-            .Select(n => n.Value);
         
         var errorObs = notificationObs
             .Where(n => n.Kind == NotificationKind.OnError);
-        result.Add(errorObs.Subscribe(e =>
+        var subscription = errorObs.Subscribe(e =>
         {
-            if (e.Exception != null)
-            {
-                _logger.LogError(e.Exception, "Exception in sensor reading pipeline");
-            }
-            _logger.LogError("Unknown error in sensor reading pipeline");    
-        }));
-        
-        result.Add(successObs
+            _logger.LogError(e.Exception, errorMessage);
+        });
+        return subscription;
+    }
+    
+    private IDisposable Subscribe(string subject, Func<Task> handler, string errorMessage)
+    {
+        var notificationObs = _bus.Subscribe(subject)
+            .ObserveOn(_scheduler)
+            .Select(o=>Observable.FromAsync(async ()=> await handler()))
             .Concat()
-            .Subscribe());
-            
-        return result;
+            .Materialize();
+        
+        var errorObs = notificationObs
+            .Where(n => n.Kind == NotificationKind.OnError);
+        var subscription = errorObs.Subscribe(e =>
+        {
+            _logger.LogError(e.Exception, errorMessage);
+        });
+        return subscription;
     }
 
     private async Task OnSensorRead(SensorReading payload)

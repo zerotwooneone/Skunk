@@ -7,4 +7,6 @@ public interface IMongoService
         string type, 
         float value, 
         DateTimeOffset? utcTimestamp = null);
+
+    Task<IEnumerable<SensorValue>> GetLatestSensorValues();
 }
