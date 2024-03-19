@@ -55,13 +55,14 @@ public class ConnectionFactory : IConnectionFactory
                 //StopBits = StopBits.None,
                 DataBits = 8,
                 Handshake = Handshake.None,
-                Encoding = Encoding.UTF8
+                Encoding = Encoding.ASCII
             };
 
             try
             {
                 connection = new Connection(_connectionLogger, serialPort);
                 serialPort.Open();
+                serialPort.DtrEnable = true;
                 _logger.LogInformation("Opened serial port {portName}", serialPort.PortName);
                 return true;
             }
