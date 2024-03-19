@@ -71,25 +71,25 @@ public class MongoService : IMongoService
         
         //this truncates the non-hour milliseconds from the value;
         var utcHour = (utcUnixMs / millisecondsPerHour) * millisecondsPerHour;
-
         
-        var updateFilter = new ObjectFilterDefinition<HourlySensorBucketDto>(new HourlySensorBucketDto
+        var updateFilter = new ObjectFilterDefinition<BsonDocument>(new BsonDocument
         {
-            type = type,
-            utcHour = utcHour
+            {"type", type},
+            {"utcHour", utcHour}
         });
 
         var msSinceHour = utcUnixMs % millisecondsPerHour;
-        var update = Builders<HourlySensorBucketDto>.Update.Push("values", new HourlySensorValueDto()
+        var update = Builders<BsonDocument>.Update.Push("values", new BsonDocument()
         {
-            value= value,
-            msSinceHour= msSinceHour
+            {"value", value},
+            {"msSinceHour", msSinceHour}
         });
-        var updateOptions = new FindOneAndUpdateOptions<HourlySensorBucketDto>
+        
+        var updateOptions = new FindOneAndUpdateOptions<BsonDocument>
         {
             IsUpsert = true
         };
-        await _hourlyCollection.Value.FindOneAndUpdateAsync(updateFilter, update, updateOptions);
+        await _database.Value.GetCollection<BsonDocument>("hourlySensors").FindOneAndUpdateAsync(updateFilter, update, updateOptions);
     }
 
     public async Task<IEnumerable<SensorValue>> GetLatestSensorValues()
