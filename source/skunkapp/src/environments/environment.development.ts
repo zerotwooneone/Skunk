@@ -1,11 +1,6 @@
 import { SensorsConfig } from "./SensorsConfig";
 
 const sensors: SensorsConfig = {
-    DummySensor: {
-        id: 'Dummy Sensor',
-        MinValue: 0,
-        MaxValue: 1,
-    },
     Formaldehyde: {
         id: 'BZ',
         MaxValue: 32767 // (2^31) - 1 (short) max value
