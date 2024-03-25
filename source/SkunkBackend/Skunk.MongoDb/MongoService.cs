@@ -105,6 +105,39 @@ public class MongoService : IMongoService
         
         var targetHour = document.utcHour;
 
+        note("work on improving query");
+        /*var pipeline = new []
+        {
+            new BsonDocument("$group",
+                new BsonDocument
+                {
+                    {"_id", "$type"},
+                    {
+                        "type",
+                        new BsonDocument("$first", "$type")
+                    },
+                    {
+                        "maxUtcHour",
+                        new BsonDocument("$max", "$utcHour")
+                    }
+                })
+        };
+
+        var maxUtcHourByTypeCursor = await _database.Value.GetCollection<BsonDocument>("hourlySensors")
+            .AggregateAsync(PipelineDefinition<BsonDocument, BsonDocument>.Create(pipeline));
+
+        var maxUtcHourByType = await maxUtcHourByTypeCursor.ToListAsync();
+
+        var targetTypesAndHours = maxUtcHourByType.Select(b => new BsonDocument("$expr",
+            new BsonDocument("$and", 
+                new BsonArray
+                {
+                    new BsonDocument("$eq",
+                        new BsonDocument("$type", b["type"])),
+                    new BsonDocument("$eq",
+                        new BsonDocument("$utcHour", b["maxUtcHour"]))
+                })));*/
+
         var allSensors = await _hourlyCollection.Value
             .AsQueryable()
             .Where(b => b.utcHour == targetHour)
