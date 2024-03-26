@@ -98,7 +98,7 @@ export class BackendService {
         CO2: this.GetSensorValue(data, this.sensorsConfig.Co2), 
         DummySensor: this.GetSensorValue(data, this.sensorsConfig.DummySensor, "Value -999"),
         TimeStamp: timeStamp
-      };      
+      };
       this._sensorData.next(payload);
     });
   }
