@@ -18,6 +18,7 @@ public class SkunkContext: DbContext
     
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
+        //todo: fix this dirty hack to let migrations work. for now, put static migration string here
         var connectionString = _config == null
         ? ""
         : GetConnectionString();
@@ -28,8 +29,8 @@ public class SkunkContext: DbContext
     
     protected override void OnModelCreating(ModelBuilder builder) 
     {
+        //this allows columns to autoincrement 
         builder.UseIdentityColumns();
-            //.UseSerialColumns();
     }
     
     private string GetConnectionString()

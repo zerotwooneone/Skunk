@@ -9,5 +9,6 @@ public interface IPostgresService
         SkunkContext skunkContext,
         DateTimeOffset? utcTimestamp = null);
 
-    Task<IEnumerable<SensorValue>> GetLatestSensorValues();
+    Task<IEnumerable<ISensorValue>> GetLatestSensorValues(
+        SkunkContext skunkContext);
 }

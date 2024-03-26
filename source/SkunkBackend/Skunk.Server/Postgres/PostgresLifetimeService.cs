@@ -61,22 +61,20 @@ public class PostgresLifetimeService : IHostedService
 
     private async Task OnPeriodicSensorCheck()
     {
-        var latestSensorValues = await _postgresService.GetLatestSensorValues();
-        if (latestSensorValues == null)
-        {
-            return;
-        }
-
-        var sensorValues = latestSensorValues as SensorValue[] ?? latestSensorValues.ToArray();
+        await using var scope = _serviceProvider.CreateAsyncScope();
+        var skunkContext = scope.ServiceProvider.GetRequiredService<SkunkContext>();
+        
+        var latestSensorValues = await _postgresService.GetLatestSensorValues(skunkContext);
+        var sensorValues = latestSensorValues as ISensorValue[] ?? latestSensorValues.ToArray();
         if (!sensorValues.Any())
         {
             return;
         }
         var sensorReadings = sensorValues.Select(v=>new SensorReading
         {
-            name = v.Name,
+            name = v.Type,
             value = v.Value,
-            utcUnixMs = v.TimeStamp
+            utcTimestamp = v.GetTimestamp()
         }).ToArray();
 
         await _bus.Publish("LatestSensorValues", (IEnumerable<SensorReading>)sensorReadings);
@@ -126,14 +124,8 @@ public class PostgresLifetimeService : IHostedService
         }
         
         await using var scope = _serviceProvider.CreateAsyncScope();
-        var skunkContext = scope.ServiceProvider.GetService<SkunkContext>();
-
-        if (skunkContext == null)
-        {
-            _logger.LogWarning("context is null");
-            return;
-        }
+        var skunkContext = scope.ServiceProvider.GetRequiredService<SkunkContext>();
         
-        await _postgresService.AddSensorValue(payload.name, payload.value, skunkContext);
+        await _postgresService.AddSensorValue(payload.name, payload.value, skunkContext, utcTimestamp: payload.utcTimestamp);
     }
 }

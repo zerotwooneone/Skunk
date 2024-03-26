@@ -125,7 +125,7 @@ namespace Skunk.Server.Serial
 
         private async Task OnThrottledString(IReadOnlyList<string[]> values)
         {
-             var unixms = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+             var utcTimestamp = DateTimeOffset.UtcNow;
             foreach (var value in values)
             {
                 if (!float.TryParse(value[1], out var fValue))
@@ -137,7 +137,7 @@ namespace Skunk.Server.Serial
                 {
                     name = value[0],
                     value = fValue,
-                    utcUnixMs = unixms
+                    utcTimestamp = utcTimestamp
                 };
                 await _bus.Publish("sensorRead", payload);
             }

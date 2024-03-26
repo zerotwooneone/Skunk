@@ -1,8 +1,13 @@
 ﻿namespace Skunk.Postgres.Interfaces;
 
-public class SensorValue
+public interface ISensorValue
 {
-    public string Name { get; init; }
-    public float Value { get; init; }
-    public long TimeStamp { get; init; }
+    string Type { get; }
+    float Value { get; }
+    long UtcMsTimeStamp { get; }
+
+    DateTimeOffset GetTimestamp()
+    {
+        return DateTimeOffset.FromUnixTimeMilliseconds(UtcMsTimeStamp);
+    }
 }

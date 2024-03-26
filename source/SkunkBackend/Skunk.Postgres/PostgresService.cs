@@ -48,81 +48,17 @@ public class PostgresService : IPostgresService
         });
 
         await skunkContext.SaveChangesAsync();
-        /*
-        const long millisecondsPerHour=60*60*1000;
-
-        //this truncates the non-hour milliseconds from the value;
-        var utcHour = (utcUnixMs / millisecondsPerHour) * millisecondsPerHour;
-
-        var updateFilter = new ObjectFilterDefinition<BsonDocument>(new BsonDocument
-        {
-            {"type", type},
-            {"utcHour", utcHour}
-        });
-
-        var msSinceHour = utcUnixMs % millisecondsPerHour;
-        var update = Builders<BsonDocument>.Update.Push("values", new BsonDocument()
-        {
-            {"value", value},
-            {"msSinceHour", msSinceHour}
-        });
-
-        var updateOptions = new FindOneAndUpdateOptions<BsonDocument>
-        {
-            IsUpsert = true
-        };
-        await _database.Value.GetCollection<BsonDocument>("hourlySensors").FindOneAndUpdateAsync(updateFilter, update, updateOptions);*/
     }
 
-    public async Task<IEnumerable<SensorValue>> GetLatestSensorValues()
+    public async Task<IEnumerable<ISensorValue>> GetLatestSensorValues(SkunkContext skunkContext)
     {
-        /*var document = Queryable.OrderByDescending(_hourlyCollection.Value
-                .AsQueryable(), b=>b.utcHour)
-            .FirstOrDefault();
-
-        if (document == null)
-        {
-            return Enumerable.Empty<SensorValue>();    
-        }
-        
-        var targetHour = document.utcHour;
-        
-
-        var allSensors = await _hourlyCollection.Value
-            .AsQueryable()
-            .Where(b => b.utcHour == targetHour)
-            .ToListAsync();
-
-        if (allSensors == null)
-        {
-            return Enumerable.Empty<SensorValue>();
-        }
-        
-        return allSensors.SelectMany(bucketDto =>
-        {
-            if (bucketDto.values == null ||
-                string.IsNullOrWhiteSpace(bucketDto.type) ||
-                bucketDto.utcHour == null)
-            {
-                return Array.Empty<SensorValue>();
-            }
-            //todo: should sort, but for now we just guess that the last one is the right one
-            var lastValue = bucketDto.values.Last();
-            if (lastValue.msSinceHour == null ||
-                lastValue.value == null)
-            {
-                return Array.Empty<SensorValue>();
-            }
-            return new[]{ 
-                new SensorValue
-                {
-                    Name = bucketDto.type,
-                    TimeStamp = bucketDto.utcHour.Value + lastValue.msSinceHour.Value,
-                    Value = lastValue.value.Value
-                }
-            };
-        }).ToArray();*/
-        return Enumerable.Empty<SensorValue>();
+        const int maxSanityLimit = 1000;
+        var x = skunkContext.SensorValues
+            .GroupBy(s => s.Type)
+            .Select(typeGroup => typeGroup.OrderByDescending(g => g.UtcMsTimeStamp).First())
+            .Take(maxSanityLimit)
+            .ToArray();
+        return x;
     }
     
     private NpgsqlCommand GetCommand()

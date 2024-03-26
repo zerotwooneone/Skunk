@@ -1,9 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Skunk.Postgres.Interfaces;
 
 namespace Skunk.Postgres;
 
-public class SensorValueDto
+public class SensorValueDto: ISensorValue
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
