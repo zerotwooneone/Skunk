@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Skunk.Postgres;
 using Skunk.Postgres.Interfaces;
 
@@ -22,7 +23,8 @@ namespace Skunk.Server.Postgres
                     return c;
                 })
                 .AddSingleton<IPostgresService, PostgresService>()
-                .AddHostedService<PostgresLifetimeService>();
+                .AddHostedService<PostgresLifetimeService>()
+                .AddDbContext<SkunkContext>(o => o.UseNpgsql());;
         }
     }
 }

@@ -5,7 +5,8 @@ public interface IPostgresService
     Task UpdateStartupCount();
     Task AddSensorValue(
         string type, 
-        float value, 
+        float value,
+        SkunkContext skunkContext,
         DateTimeOffset? utcTimestamp = null);
 
     Task<IEnumerable<SensorValue>> GetLatestSensorValues();

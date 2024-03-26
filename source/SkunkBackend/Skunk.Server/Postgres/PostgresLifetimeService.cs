@@ -3,6 +3,7 @@ using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using Computer.Domain.Bus.Reactive.Contracts;
+using Skunk.Postgres;
 using Skunk.Postgres.Interfaces;
 using Skunk.Server.DomainBus;
 using Skunk.Server.Reactive;
@@ -16,17 +17,20 @@ public class PostgresLifetimeService : IHostedService
     private readonly CompositeDisposable _disposables;
     private readonly IScheduler _scheduler;
     private readonly ILogger<PostgresLifetimeService> _logger;
+    private readonly IServiceProvider _serviceProvider;
 
     public PostgresLifetimeService(
         IPostgresService postgresService,
         IReactiveBus bus,
         ISchedulerLocator schedulerLocator,
-        ILogger<PostgresLifetimeService> logger)
+        ILogger<PostgresLifetimeService> logger,
+        IServiceProvider serviceProvider)
     {
         _disposables = new CompositeDisposable();
         _postgresService = postgresService;
         _bus = bus;
         _logger = logger;
+        _serviceProvider = serviceProvider;
         _scheduler = schedulerLocator.GetScheduler(nameof(PostgresLifetimeService));
     }
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -120,7 +124,16 @@ public class PostgresLifetimeService : IHostedService
             _logger.LogWarning("Got a sensor payload without a name");
             return;
         }
+        
+        await using var scope = _serviceProvider.CreateAsyncScope();
+        var skunkContext = scope.ServiceProvider.GetService<SkunkContext>();
 
-        await _postgresService.AddSensorValue(payload.name, payload.value);
+        if (skunkContext == null)
+        {
+            _logger.LogWarning("context is null");
+            return;
+        }
+        
+        await _postgresService.AddSensorValue(payload.name, payload.value, skunkContext);
     }
 }

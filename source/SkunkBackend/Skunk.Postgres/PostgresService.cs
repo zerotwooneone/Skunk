@@ -18,7 +18,7 @@ public class PostgresService : IPostgresService
     {
         _config = config ?? throw new ArgumentException("config cannot be null");
         _logger = logger;
-        
+
         _connection = new Lazy<NpgsqlConnection>(() =>
         {
             var con = new NpgsqlConnection(
@@ -33,11 +33,22 @@ public class PostgresService : IPostgresService
         //throw new NotImplementedException();
     }
 
-    public async Task AddSensorValue(string type, float value, DateTimeOffset? utcTimestamp = null)
+    public async Task AddSensorValue(
+        string type, 
+        float value,
+        SkunkContext skunkContext,
+        DateTimeOffset? utcTimestamp = null)
     {
-        var command = GetCommand();
-        /*var utcUnixMs = (utcTimestamp ?? DateTimeOffset.UtcNow).ToUnixTimeMilliseconds();
+        var utcUnixMs = (utcTimestamp ?? DateTimeOffset.UtcNow).ToUnixTimeMilliseconds();
+        await skunkContext.SensorValues.AddAsync(new SensorValueDto
+        {
+            Type = type,
+            Value = value,
+            UtcMsTimeStamp = utcUnixMs
+        });
 
+        await skunkContext.SaveChangesAsync();
+        /*
         const long millisecondsPerHour=60*60*1000;
 
         //this truncates the non-hour milliseconds from the value;
