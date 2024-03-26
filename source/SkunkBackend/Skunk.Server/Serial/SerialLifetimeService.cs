@@ -88,6 +88,7 @@ namespace Skunk.Server.Serial
                 
                 //only where there is exactly one separator and the parts are not blank
                 .Where(a=>a.Length ==2 && !string.IsNullOrWhiteSpace(a[0]) && !string.IsNullOrWhiteSpace(a[1]))
+                .Select(s=>new ThrottledString {Text=s,UtcTimestamp= DateTimeOffset.UtcNow})
                 
                 //collect these until timespan has elapsed, then send the list
                 .Buffer(Observable.Interval(TimeSpan.FromSeconds(1)))
@@ -114,33 +115,41 @@ namespace Skunk.Server.Serial
                     _logger.LogError(n.Exception, "error occurred handling strings");
                 });
             
-            var success = asyncObs
-                .Where(n=>n.Kind == NotificationKind.OnNext)
-                
-                //need to subscribe to start things
-                .Subscribe();
-            
-            return new CompositeDisposable(success, errorHandler);
+            //we only need to subscribe to the error handler as success in handled in that pipeline
+            return errorHandler;
         }
 
-        private async Task OnThrottledString(IReadOnlyList<string[]> values)
+        private async Task OnThrottledString(IReadOnlyList<ThrottledString> values)
         {
-             var utcTimestamp = DateTimeOffset.UtcNow;
+            var payloadsByName = new Dictionary<string, SensorReading>();
             foreach (var value in values)
             {
-                if (!float.TryParse(value[1], out var fValue))
+                if (!float.TryParse(value.Text.Skip(1).First(), out var fValue))
                 {
                     continue;
                 }
-                
+
+                var name = value.Text.First();
                 var payload = new SensorReading
                 {
-                    name = value[0],
+                    name = name,
                     value = fValue,
-                    utcTimestamp = utcTimestamp
+                    utcTimestamp = value.UtcTimestamp
                 };
+                //prevent duplicates, this overwrites older duplicates
+                payloadsByName[name] = payload;
+            }
+
+            foreach (var payload in payloadsByName.Values)
+            {
                 await _bus.Publish("sensorRead", payload);
             }
+        }
+
+        private class ThrottledString
+        {
+            public IReadOnlyCollection<string> Text { get; init; }
+            public DateTimeOffset UtcTimestamp { get; init; }
         }
 
         private void OnSerialString(object? sender, string e)
