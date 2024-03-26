@@ -1,4 +1,4 @@
-﻿namespace Skunk.MongoDb;
+﻿namespace Skunk.Postgres;
 
 internal class HourlySensorValueDto
 {

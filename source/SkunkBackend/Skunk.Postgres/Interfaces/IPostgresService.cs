@@ -1,6 +1,6 @@
-﻿namespace Skunk.MongoDb.Interfaces;
+﻿namespace Skunk.Postgres.Interfaces;
 
-public interface IMongoService
+public interface IPostgresService
 {
     Task UpdateStartupCount();
     Task AddSensorValue(

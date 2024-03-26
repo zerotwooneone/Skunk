@@ -1,77 +1,48 @@
 ﻿using Microsoft.Extensions.Logging;
-using MongoDB.Bson;
-using MongoDB.Driver;
-using MongoDB.Driver.Linq;
-using Skunk.MongoDb.Interfaces;
+using Npgsql;
+using Skunk.Postgres.Interfaces;
 
-namespace Skunk.MongoDb;
+namespace Skunk.Postgres;
 
-public class MongoService : IMongoService
+public class PostgresService : IPostgresService
 {
-    private readonly IMongoConfig _config;
-    private readonly ILogger<MongoService> _logger;
-    private readonly Lazy<MongoClient> _client;
-    private readonly Lazy<IMongoDatabase> _database;
-    private readonly Lazy<IMongoCollection<HourlySensorBucketDto>> _hourlyCollection;
+    private readonly IPostgresConfig _config;
+    private readonly ILogger<PostgresService> _logger;
     const string DbName="skunk";
 
-    public MongoService(
-        IMongoConfig config,
-        ILogger<MongoService> logger)
+    private readonly Lazy<NpgsqlConnection> _connection;
+
+    public PostgresService(
+        IPostgresConfig config,
+        ILogger<PostgresService> logger)
     {
         _config = config ?? throw new ArgumentException("config cannot be null");
         _logger = logger;
-        _client = new Lazy<MongoClient>(() => new MongoClient(GetConnectionString()));
-        _database = new Lazy<IMongoDatabase>(() =>
+        
+        _connection = new Lazy<NpgsqlConnection>(() =>
         {
-            var db = _client.Value.GetDatabase(DbName);
-
-            if (db == null)
-            {
-                _logger.LogWarning("Database was null name:{DbName}", DbName);
-            }
-
-            return db;
+            var con = new NpgsqlConnection(
+                connectionString: GetConnectionString());
+            con.Open();
+            return con;
         });
-        _hourlyCollection = new Lazy<IMongoCollection<HourlySensorBucketDto>>(() =>
-            _database.Value.GetCollection<HourlySensorBucketDto>("hourlySensors"));
     }
+
     public async Task UpdateStartupCount()
     {
-        
-        var db = _client.Value.GetDatabase(DbName);
-
-        if (db == null)
-        {
-            _logger.LogWarning("Database was null name:{DbName}", DbName);
-            return;
-        }
-
-        const string collectionName = "application";
-        var collection = db.GetCollection<BsonDocument>(collectionName);
-
-        var filter = Builders<BsonDocument>.Filter.Eq("type", "startupStats");
-
-        var updateOptions = new FindOneAndUpdateOptions<BsonDocument>{IsUpsert = true};
-        
-        var update = Builders<BsonDocument>.Update
-            .Inc("startupCount", 1)
-            .Set("lastStartUnixUtcMs", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
-        var document = await collection.FindOneAndUpdateAsync(
-            filter,
-            update,
-            updateOptions);
+        //throw new NotImplementedException();
     }
 
     public async Task AddSensorValue(string type, float value, DateTimeOffset? utcTimestamp = null)
     {
-        var utcUnixMs = (utcTimestamp ?? DateTimeOffset.UtcNow).ToUnixTimeMilliseconds();
+        var command = GetCommand();
+        /*var utcUnixMs = (utcTimestamp ?? DateTimeOffset.UtcNow).ToUnixTimeMilliseconds();
 
         const long millisecondsPerHour=60*60*1000;
-        
+
         //this truncates the non-hour milliseconds from the value;
         var utcHour = (utcUnixMs / millisecondsPerHour) * millisecondsPerHour;
-        
+
         var updateFilter = new ObjectFilterDefinition<BsonDocument>(new BsonDocument
         {
             {"type", type},
@@ -84,17 +55,17 @@ public class MongoService : IMongoService
             {"value", value},
             {"msSinceHour", msSinceHour}
         });
-        
+
         var updateOptions = new FindOneAndUpdateOptions<BsonDocument>
         {
             IsUpsert = true
         };
-        await _database.Value.GetCollection<BsonDocument>("hourlySensors").FindOneAndUpdateAsync(updateFilter, update, updateOptions);
+        await _database.Value.GetCollection<BsonDocument>("hourlySensors").FindOneAndUpdateAsync(updateFilter, update, updateOptions);*/
     }
 
     public async Task<IEnumerable<SensorValue>> GetLatestSensorValues()
     {
-        var document = Queryable.OrderByDescending(_hourlyCollection.Value
+        /*var document = Queryable.OrderByDescending(_hourlyCollection.Value
                 .AsQueryable(), b=>b.utcHour)
             .FirstOrDefault();
 
@@ -139,18 +110,21 @@ public class MongoService : IMongoService
                     Value = lastValue.value.Value
                 }
             };
-        }).ToArray();
+        }).ToArray();*/
+        return Enumerable.Empty<SensorValue>();
+    }
+    
+    private NpgsqlCommand GetCommand()
+    {
+        return new NpgsqlCommand
+        {
+            Connection = _connection.Value
+        };
     }
 
     private string GetConnectionString()
     {
-        var authPart = string.IsNullOrWhiteSpace(_config.UserName) || string.IsNullOrWhiteSpace(_config.Password)
-            ? string.Empty
-            : $"{_config.UserName}:{_config.Password}@";
-        var portPart = _config.Port is null or < 1
-            ? string.Empty
-            : $":{_config.Port}";
-        var connectionString = $"mongodb://{authPart}{_config.Host}{portPart}";
+        var connectionString = $"Server={_config.Host};Port=5432;User Id={_config.UserName};Password={_config.Password};Database=testdb;";
         return connectionString;
     }
 }

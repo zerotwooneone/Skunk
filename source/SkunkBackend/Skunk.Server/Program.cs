@@ -1,7 +1,7 @@
 ﻿using Skunk.Server.DomainBus;
 using Skunk.Server.Hubs;
 using Skunk.Server.Json;
-using Skunk.Server.Mongo;
+using Skunk.Server.Postgres;
 using Skunk.Server.Reactive;
 using Skunk.Server.Serial;
 
@@ -37,7 +37,7 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddSerial(builder.Configuration);
 builder.Services.AddHubs();
-builder.Services.AddMongo(builder.Configuration);
+builder.Services.AddPostgres(builder.Configuration);
 builder.Services.AddDomainBus();
 builder.Services.AddReactive();
 

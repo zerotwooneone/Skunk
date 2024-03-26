@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skunk.Server", "Skunk.Serve
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skunk.Serial", "Skunk.Serial\Skunk.Serial.csproj", "{52F8A378-FA44-452E-9D26-17A36F7F2132}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skunk.MongoDb", "Skunk.MongoDb\Skunk.MongoDb.csproj", "{588374AA-3F13-49BC-B834-6C3946C06AB1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skunk.Postgres", "Skunk.Postgres\Skunk.Postgres.csproj", "{588374AA-3F13-49BC-B834-6C3946C06AB1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

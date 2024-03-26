@@ -1,8 +1,8 @@
-﻿using Skunk.MongoDb.Interfaces;
+﻿using Skunk.Postgres.Interfaces;
 
-namespace Skunk.Server.Mongo;
+namespace Skunk.Server.Postgres;
 
-public class MongoConfiguration : IMongoConfig
+public class PostgresConfiguration : IPostgresConfig
 {
     public string? UserName { get; init; }
     public string? Password { get; init; }

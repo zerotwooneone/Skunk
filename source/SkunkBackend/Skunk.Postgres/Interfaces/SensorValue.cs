@@ -1,4 +1,4 @@
-﻿namespace Skunk.MongoDb.Interfaces;
+﻿namespace Skunk.Postgres.Interfaces;
 
 public class SensorValue
 {

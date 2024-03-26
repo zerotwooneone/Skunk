@@ -1,6 +1,6 @@
-﻿namespace Skunk.MongoDb.Interfaces;
+﻿namespace Skunk.Postgres.Interfaces;
 
-public interface IMongoConfig
+public interface IPostgresConfig
 {
     string? UserName { get; }
     string? Password { get; }

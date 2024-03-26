@@ -3,45 +3,40 @@ using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using Computer.Domain.Bus.Reactive.Contracts;
-using MongoDB.Bson.Serialization.Conventions;
-using Skunk.MongoDb.Interfaces;
+using Skunk.Postgres.Interfaces;
 using Skunk.Server.DomainBus;
 using Skunk.Server.Reactive;
 
-namespace Skunk.Server.Mongo;
+namespace Skunk.Server.Postgres;
 
-public class MongoLifetimeService : IHostedService
+public class PostgresLifetimeService : IHostedService
 {
-    private readonly IMongoService _mongoService;
+    private readonly IPostgresService _postgresService;
     private readonly IReactiveBus _bus;
     private readonly CompositeDisposable _disposables;
     private readonly IScheduler _scheduler;
-    private readonly ILogger<MongoLifetimeService> _logger;
+    private readonly ILogger<PostgresLifetimeService> _logger;
 
-    public MongoLifetimeService(
-        IMongoService mongoService,
+    public PostgresLifetimeService(
+        IPostgresService postgresService,
         IReactiveBus bus,
         ISchedulerLocator schedulerLocator,
-        ILogger<MongoLifetimeService> logger)
+        ILogger<PostgresLifetimeService> logger)
     {
         _disposables = new CompositeDisposable();
-        _mongoService = mongoService;
+        _postgresService = postgresService;
         _bus = bus;
         _logger = logger;
-        _scheduler = schedulerLocator.GetScheduler(nameof(MongoLifetimeService));
+        _scheduler = schedulerLocator.GetScheduler(nameof(PostgresLifetimeService));
     }
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        // Allows automapping of the camelCase database fields to models 
-        var camelCaseConvention = new ConventionPack { new CamelCaseElementNameConvention() };
-        ConventionRegistry.Register("CamelCase", camelCaseConvention, type => true);
-        
         foreach (var subscription in Subscribe())
         {
             _disposables.Add(subscription);
         }
         
-        await _mongoService.UpdateStartupCount();
+        await _postgresService.UpdateStartupCount();
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
@@ -62,7 +57,7 @@ public class MongoLifetimeService : IHostedService
 
     private async Task OnPeriodicSensorCheck()
     {
-        var latestSensorValues = await _mongoService.GetLatestSensorValues();
+        var latestSensorValues = await _postgresService.GetLatestSensorValues();
         if (latestSensorValues == null)
         {
             return;
@@ -126,6 +121,6 @@ public class MongoLifetimeService : IHostedService
             return;
         }
 
-        await _mongoService.AddSensorValue(payload.name, payload.value);
+        await _postgresService.AddSensorValue(payload.name, payload.value);
     }
 }
