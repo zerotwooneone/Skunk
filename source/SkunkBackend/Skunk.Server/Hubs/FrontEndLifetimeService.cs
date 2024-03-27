@@ -47,7 +47,7 @@ public class FrontEndLifetimeService : IHostedService
         var result = new List<IDisposable>();
 
         var appStartupGracePeriod = TimeSpan.FromSeconds(10);
-        var updateInterval = TimeSpan.FromSeconds(0.3);
+        var updateInterval = TimeSpan.FromSeconds(1);
         var updateObs =
             Observable
                 .Return(1)
