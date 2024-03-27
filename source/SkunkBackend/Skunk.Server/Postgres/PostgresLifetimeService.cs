@@ -1,5 +1,4 @@
-﻿using System.Reactive;
-using System.Reactive.Concurrency;
+﻿using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using Computer.Domain.Bus.Reactive.Contracts;
@@ -53,8 +52,8 @@ public class PostgresLifetimeService : IHostedService
     {
         var result = new List<IDisposable>();
 
-        result.Add(Subscribe<SensorReading>("sensorRead", OnSensorRead, "Exception in sensor reading pipeline"));
-        result.Add(Subscribe("PeriodicSensorCheck", OnPeriodicSensorCheck, "Exception in sensor check pipeline"));
+        result.Add(Subscribe<SensorReading>("sensorRead", OnSensorRead));
+        result.Add(Subscribe("PeriodicSensorCheck", OnPeriodicSensorCheck));
             
         return result;
     }
@@ -63,8 +62,17 @@ public class PostgresLifetimeService : IHostedService
     {
         await using var scope = _serviceProvider.CreateAsyncScope();
         var skunkContext = scope.ServiceProvider.GetRequiredService<SkunkContext>();
-        
-        var latestSensorValues = await _postgresService.GetLatestSensorValues(skunkContext);
+
+        IEnumerable<ISensorValue> latestSensorValues;
+        try
+        {
+            latestSensorValues = await _postgresService.GetLatestSensorValues(skunkContext);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e,"Error reading Db sensor values");
+            return;
+        }
         var sensorValues = latestSensorValues as ISensorValue[] ?? latestSensorValues.ToArray();
         if (!sensorValues.Any())
         {
@@ -80,38 +88,25 @@ public class PostgresLifetimeService : IHostedService
         await _bus.Publish("LatestSensorValues", (IEnumerable<SensorReading>)sensorReadings);
     }
 
-    private IDisposable Subscribe<T>(string subject, Func<T, Task> handler, string errorMessage)
+    private IDisposable Subscribe<T>(string subject, Func<T, Task> handler)
     {
-        var notificationObs = _bus.Subscribe<T>(subject)
+        var subscription = _bus.Subscribe<T>(subject)
             .ObserveOn(_scheduler)
             .Where(o=>o.Param != null)
             .Select(o=>Observable.FromAsync(async ()=> await handler(o.Param!)))
             .Concat()
-            .Materialize();
-        
-        var errorObs = notificationObs
-            .Where(n => n.Kind == NotificationKind.OnError);
-        var subscription = errorObs.Subscribe(e =>
-        {
-            _logger.LogError(e.Exception, errorMessage);
-        });
+            .Subscribe();
         return subscription;
     }
     
-    private IDisposable Subscribe(string subject, Func<Task> handler, string errorMessage)
+    private IDisposable Subscribe(string subject, Func<Task> handler)
     {
-        var notificationObs = _bus.Subscribe(subject)
+        var subscription = _bus.Subscribe(subject)
             .ObserveOn(_scheduler)
             .Select(o=>Observable.FromAsync(async ()=> await handler()))
             .Concat()
-            .Materialize();
+            .Subscribe();
         
-        var errorObs = notificationObs
-            .Where(n => n.Kind == NotificationKind.OnError);
-        var subscription = errorObs.Subscribe(e =>
-        {
-            _logger.LogError(e.Exception, errorMessage);
-        });
         return subscription;
     }
 
@@ -125,7 +120,14 @@ public class PostgresLifetimeService : IHostedService
         
         await using var scope = _serviceProvider.CreateAsyncScope();
         var skunkContext = scope.ServiceProvider.GetRequiredService<SkunkContext>();
-        
-        await _postgresService.AddSensorValue(payload.name, payload.value, skunkContext, utcTimestamp: payload.utcTimestamp);
+
+        try
+        {
+            await _postgresService.AddSensorValue(payload.name, payload.value, skunkContext, utcTimestamp: payload.utcTimestamp);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e,"Error Adding sensor value");
+        }
     }
 }
