@@ -55,6 +55,8 @@ public class FrontEndLifetimeService : IHostedService
                 .ObserveOn(_scheduler)
                 .Select(_=>Observable.Interval(updateInterval))
                 .Switch()
+                .Select(_=>Observable.FromAsync(OnUpdate) )
+                .Concat()
                 .Materialize();
 
         var updateError = updateObs
@@ -64,15 +66,6 @@ public class FrontEndLifetimeService : IHostedService
         {
             _logger.LogError(e.Exception, "Got an error in update pipeline");
         }));
-
-        var updateNext = updateObs
-            .Where(o => o.Kind == NotificationKind.OnNext)
-            .Select(o=>o.Value);
-        
-        result.Add(updateNext
-            .Select(_=>Observable.FromAsync(OnUpdate) )
-            .Concat()
-            .Subscribe());
 
         var currentObs = _bus
             .Subscribe<IEnumerable<SensorReading>>("LatestSensorValues")
