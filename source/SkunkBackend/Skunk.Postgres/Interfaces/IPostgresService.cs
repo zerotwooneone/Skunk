@@ -11,4 +11,6 @@ public interface IPostgresService
 
     Task<IEnumerable<ISensorValue>> GetLatestSensorValues(
         SkunkContext skunkContext);
+
+    Task<IEnumerable<ISensorStats>> GetSensorStats(SkunkContext skunkContext);
 }

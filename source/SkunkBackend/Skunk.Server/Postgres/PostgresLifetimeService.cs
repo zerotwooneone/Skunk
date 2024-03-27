@@ -54,8 +54,33 @@ public class PostgresLifetimeService : IHostedService
 
         result.Add(Subscribe<SensorReading>("sensorRead", OnSensorRead));
         result.Add(Subscribe("PeriodicSensorCheck", OnPeriodicSensorCheck));
+        result.Add(Subscribe("StatsUpdateRequest", OnStatsUpdateRequested));
             
         return result;
+    }
+
+    private async Task OnStatsUpdateRequested()
+    {
+        await using var scope = _serviceProvider.CreateAsyncScope();
+        var skunkContext = scope.ServiceProvider.GetRequiredService<SkunkContext>();
+
+        IEnumerable<ISensorStats> result;
+        try
+        {
+            var enumStats = await _postgresService.GetSensorStats(skunkContext); 
+            result = enumStats as ISensorStats[] ?? enumStats.ToArray();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e,"Error getting stats");
+            return;
+        }
+
+        if (!result.Any())
+        {
+            return;
+        }
+        await _bus.Publish("LatestSensorStats", result);
     }
 
     private async Task OnPeriodicSensorCheck()

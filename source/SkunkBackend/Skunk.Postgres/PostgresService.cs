@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 using Skunk.Postgres.Interfaces;
 
@@ -61,6 +62,27 @@ public class PostgresService : IPostgresService
         return x;
     }
     
+    private class SensorStats : ISensorStats
+    {
+        public string Type { get; init; }
+        public float Max { get; init; }
+        public float Average { get; init; }
+    }
+
+    public async Task<IEnumerable<ISensorStats>> GetSensorStats(SkunkContext skunkContext)
+    {
+        var x = await skunkContext.SensorValues
+            .GroupBy(s => s.Type)
+            .Select(g => (ISensorStats)new SensorStats
+            {
+                Type = g.Key,
+                Max = g.Max(t => t.Value),
+                Average = g.Average(t => t.Value)
+            })
+            .ToArrayAsync();
+        return x;
+    }
+
     private NpgsqlCommand GetCommand()
     {
         return new NpgsqlCommand

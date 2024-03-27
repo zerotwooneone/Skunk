@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using Skunk.Postgres.Interfaces;
 
 namespace Skunk.Server.Hubs;
 
@@ -13,18 +14,19 @@ public class FrontendService : IFrontendService
     {
         _hubContext = hubContext;
         _logger = logger;
-        
-        //todo: need to subscribe to send sensor data
     }
     public async Task SendSensorPayload(SensorPayload payload)
     {
-        if (payload == null)
-        {
-            throw new ArgumentNullException(nameof(payload));
-        }
+        ArgumentNullException.ThrowIfNull(payload);
         await _hubContext.Clients.Groups(HubGroupKeys.Streaming).SendCoreAsync("SensorDataToFrontend",
             [
                 payload
             ]);
+    }
+
+    public async Task SendSensorStats(IEnumerable<ISensorStats> stats)
+    {
+        var array = stats as ISensorStats[] ?? stats.ToArray();
+        await _hubContext.Clients.Groups(HubGroupKeys.Streaming).SendCoreAsync("SensorStatsToFrontEnd", [array]);
     }
 }
