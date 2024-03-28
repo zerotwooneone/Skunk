@@ -23,6 +23,14 @@ Air Quality Sensor Package
   - source/skunkapp
   - Subscribes via SignalR to data updates
 
+![Architecture](architecture.png)
+
+- Bus is a generic asynchronous Publish/Subscribe interface
+  - The bus is currently in-memory, but could easily be replaced by RabbitMq, Kafka, etc to allow cross-application communication
+- Horizontal layers structured to allow each to become a separate application and scale independently as needed
+- Horizontal layers do not directly interface, but instead Publish/Subscribe to the bus
+
+
 ## Development
 
 To develop the project on raspberry pi, run
