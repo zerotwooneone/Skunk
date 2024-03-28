@@ -4,8 +4,12 @@ Air Quality Sensor Package
 
 ![Animated Sensors](skunk2.gif)
 
+- VOC - Volitile organic compounds
+  - inferred from Eth and H2
+- Eth - Ethanol
+- CO2 - Carbondioxide
 - The red circle is the max value that has been seen
-- The grey circle is the rolling average value
+- The grey circle is the lifetime average value
 
 ## Setup
 
