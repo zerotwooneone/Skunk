@@ -130,7 +130,7 @@ export class BackendService {
         TimeStamp: timeStamp
       };
       this._sensorData.next(payload);
-      var ethValue = this.GetSensorValue(data, this.sensorsConfig.Eth);
+      let ethValue = this.GetSensorValue(data, this.sensorsConfig.Eth);
       if(typeof ethValue == "number"){
         this._eth$.next(ethValue);
       }
@@ -140,7 +140,7 @@ export class BackendService {
         //todo: log debug
         return;
       }
-      var param: SensorStatPayload = {
+      let param: SensorStatPayload = {
         Formaldehyde: this.GetSensorStats(data, this.sensorsConfig.Formaldehyde),
         Co2: this.GetSensorStats(data, this.sensorsConfig.Co2),
         VoC: this.GetSensorStats(data, this.sensorsConfig.Voc),
@@ -154,7 +154,7 @@ export class BackendService {
 
   private GetSensorStats(data: SensorStatsDto[],
     sensorConfig: SensorConfig): SensorStats{
-      var stats = data.find(d=>d.type === sensorConfig.id) ?? new SensorStatsDto;
+      let stats = data.find(d=>d.type === sensorConfig.id) ?? new SensorStatsDto;
       return {
         Type: stats.type ?? sensorConfig.id,
         Max: stats.max ?? NaN,
