@@ -54,10 +54,11 @@ void loop() {
     Serial.println(SGP.getH2());
     Serial.print("ETH:");
     Serial.println(SGP.getEthanol());
-  } 
+  }
+  
   Serial.print("BZ:");
   Serial.println(analogRead(A1));
   digitalWrite(led, ledOn);
   ledOn = !ledOn;
-  delay(1000);               // wait for a second  
+  delay(1500);               // wait for a second and a half
 }
