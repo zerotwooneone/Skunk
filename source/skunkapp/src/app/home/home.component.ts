@@ -39,7 +39,7 @@ export class HomeComponent {
   readonly co2Avg$: Observable<number>;
   
   constructor(
-    private readonly backend: BackendService
+    readonly backend: BackendService
   ) {
     this.co2Stats = new StatsHack(400);
     this.vocStats = new StatsHack(400);

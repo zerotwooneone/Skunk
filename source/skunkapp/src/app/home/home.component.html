@@ -22,11 +22,20 @@
         </sk-knob>
     </div>
     <div class="sensor-container">
+        <h2>Eth ppm</h2>
+        <sk-knob [ngModel]="(backend.Eth$|async)" [max]="this.sensorsConfig.Eth.MaxValue??100" 
+            [marker1]="backend.EthMax$|async" 
+            marker1Color="#F006"
+            [marker2]="backend.EthAvg$|async"
+            marker2Color="#FFF4">
+        </sk-knob>
+    </div>
+    <div class="sensor-container">
         <h2>CO2 ppm</h2>
         <sk-knob [ngModel]="(co2$|async)" [max]="this.co2Config.MaxValue ?? 1" 
-            [marker1]="this.co2Max$|async" 
-            marker1Color="#F006"
-            [marker2]="this.co2Avg$|async"
+            [marker1]="this.co2Max$|async"
+            marker1Color="#F006" 
+            [marker2]="this.co2Avg$|async" 
             marker2Color="#FFF4">
         </sk-knob>
     </div>
