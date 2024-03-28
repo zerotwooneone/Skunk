@@ -29,7 +29,15 @@ export class HomeComponent {
   readonly formaldehydeSensorValue$: Observable<number>;
   readonly co2Stats: StatsHack;
   readonly vocStats: StatsHack;
-  readonly formStats: StatsHack;  
+  readonly formStats: StatsHack;
+  
+  readonly bzMax$: Observable<number>;
+  readonly bzAvg$: Observable<number>;
+  readonly vocMax$: Observable<number>;
+  readonly vocAvg$: Observable<number>;
+  readonly co2Max$: Observable<number>;
+  readonly co2Avg$: Observable<number>;
+  
   constructor(
     private readonly backend: BackendService
   ) {
@@ -41,6 +49,40 @@ export class HomeComponent {
         console.info('sensor data', p);
         return p;
       });*/
+    
+    this.bzMax$ = this.backend.SensorStats$.pipe(
+      filter(s => !!s.Formaldehyde && !Number.isNaN(s.Formaldehyde.Max)),
+      map(s=>s.Formaldehyde.Max),
+      distinctUntilChanged()
+    );
+    this.bzAvg$ = this.backend.SensorStats$.pipe(
+      filter(s => !!s.Formaldehyde && !Number.isNaN(s.Formaldehyde.Average)),
+      map(s => s.Formaldehyde.Average),
+      distinctUntilChanged()
+    );
+
+    this.vocMax$ = this.backend.SensorStats$.pipe(
+      filter(s => !!s.VoC && !Number.isNaN(s.VoC.Max)),
+      map(s => s.VoC.Max),
+      distinctUntilChanged()
+    );
+    this.vocAvg$ = this.backend.SensorStats$.pipe(
+      filter(s => !!s.VoC && !Number.isNaN(s.VoC.Average)),
+      map(s => s.VoC.Average),
+      distinctUntilChanged()
+    );
+
+    this.co2Max$ = this.backend.SensorStats$.pipe(
+      filter(s => !!s.Co2 && !Number.isNaN(s.Co2.Max)),
+      map(s => s.Co2.Max),
+      distinctUntilChanged()
+    );
+    this.co2Avg$ = this.backend.SensorStats$.pipe(
+      filter(s => !!s.Co2 && !Number.isNaN(s.Co2.Average)),
+      map(s => s.Co2.Average),
+      distinctUntilChanged()
+    );
+
     this.dummySensorValue$ = backend.SensorData$.pipe(
       filter(p => typeof p.DummySensor == 'number'),
       map(p => {

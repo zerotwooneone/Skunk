@@ -165,13 +165,13 @@ export class KnobComponent {
      * The location of marker1 between min and max
      * @group Props
      */
-    @Input() marker1: number|undefined = undefined;
+    @Input() marker1: number|undefined|null = undefined;
 
     /**
      * The location of marker2 between min and max
      * @group Props
      */
-    @Input() marker2: number | undefined = undefined;
+    @Input() marker2: number | undefined|null = undefined;
 
     onModelChange: Function = () => {};
 
