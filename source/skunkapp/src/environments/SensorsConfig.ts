@@ -4,6 +4,7 @@ export type SensorsConfig = {
     readonly Formaldehyde: SensorConfig;
     readonly Voc: SensorConfig;
     readonly Co2: SensorConfig;
+    readonly Eth: SensorConfig;
 };
 
 export type NumericConfigValues = { readonly [key: string]: number | undefined };

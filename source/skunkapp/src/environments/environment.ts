@@ -7,11 +7,15 @@ const sensorsConfig: SensorsConfig = {
     },
     Voc: {
         id: 'VOC',
-        MaxValue: 100000 //just a guess
+        MaxValue: 20000 //just a guess
     },
     Co2: {
         id: 'CO2',
-        MaxValue: 10000 //just a guess
+        MaxValue: 4000
+    },
+    Eth: {
+        id: 'ETH',
+        MaxValue: 100
     }
 };
 export const environment = {

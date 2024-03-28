@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import * as signalR from "@microsoft/signalr";
 import { environment } from "../../environments/environment"
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, distinctUntilChanged } from 'rxjs';
 import { SensorPayload } from './SensorPayload';
 import { SensorConfig, SensorsConfig } from '../../environments/SensorsConfig';
 import { SensorStatPayload } from './SensorStatPayload';
@@ -25,6 +25,12 @@ export class BackendService {
   get connected(): boolean {
     return this._connected.value;
   }
+  private readonly _eth$: BehaviorSubject<number>;
+  readonly Eth$: Observable<number>;
+  private readonly _ethMax$: BehaviorSubject<number>;
+  readonly EthMax$: Observable<number>;
+  private readonly _ethAvg$: BehaviorSubject<number>;
+  readonly EthAvg$: Observable<number>;
   constructor() {
     this._connected = new BehaviorSubject(false);
     this.connected$ = this._connected.asObservable();
@@ -49,7 +55,25 @@ export class BackendService {
     this._connection.onreconnected(connectionId => {
       console.info('reconnected', connectionId);
       this._connected.next(true);
-    })
+    });
+    this._eth$ = new BehaviorSubject<number>(NaN);
+    this.Eth$ = this._eth$
+      .asObservable()
+      .pipe(
+        distinctUntilChanged()
+      );
+    this._ethMax$ = new BehaviorSubject<number>(NaN);
+    this.EthMax$ = this._ethMax$
+      .asObservable()
+      .pipe(
+        distinctUntilChanged()
+      );
+    this._ethAvg$ = new BehaviorSubject<number>(NaN);
+    this.EthAvg$ = this._ethAvg$
+      .asObservable()
+      .pipe(
+        distinctUntilChanged()
+      );
   }
 
   async connect(): Promise<boolean> {
@@ -106,6 +130,10 @@ export class BackendService {
         TimeStamp: timeStamp
       };
       this._sensorData.next(payload);
+      var ethValue = this.GetSensorValue(data, this.sensorsConfig.Eth);
+      if(typeof ethValue == "number"){
+        this._eth$.next(ethValue);
+      }
     });
     this._connection?.on('SensorStatsToFrontEnd', async (data: SensorStatsDto[] | undefined) => {
       if (!data || data.length === 0) {
@@ -118,6 +146,9 @@ export class BackendService {
         VoC: this.GetSensorStats(data, this.sensorsConfig.Voc),
       };
       this._sensorStats.next(param);
+      let ethStats = this.GetSensorStats(data, this.sensorsConfig.Eth);
+      this._ethAvg$.next(ethStats.Average);
+      this._ethMax$.next(ethStats.Max);
     });
   }
 
