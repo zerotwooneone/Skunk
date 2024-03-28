@@ -4,6 +4,8 @@ import { environment } from "../../environments/environment"
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { SensorPayload } from './SensorPayload';
 import { SensorConfig, SensorsConfig } from '../../environments/SensorsConfig';
+import { SensorStatPayload } from './SensorStatPayload';
+import { SensorStats } from './SensorStats';
 
 @Injectable({
   providedIn: 'root'
@@ -15,7 +17,9 @@ export class BackendService {
 
   private _connection: signalR.HubConnection | undefined;
   readonly SensorData$: Observable<SensorPayload>;
+  readonly SensorStats$: Observable<SensorStatPayload>;
   private readonly _sensorData: Subject<SensorPayload>;
+  private readonly _sensorStats: Subject<SensorStatPayload>;
   private readonly _connected: BehaviorSubject<boolean>;
   readonly connected$: Observable<boolean>;
   get connected(): boolean {
@@ -24,8 +28,10 @@ export class BackendService {
   constructor() {
     this._connected = new BehaviorSubject(false);
     this.connected$ = this._connected.asObservable();
+    this._sensorStats = new Subject<SensorStatPayload>();
     this._sensorData = new Subject<SensorPayload>();
     this.SensorData$ = this._sensorData.asObservable();
+    this.SensorStats$ = this._sensorStats.asObservable();
     const defaultBuilder = new signalR.HubConnectionBuilder()
       .withAutomaticReconnect()
       .withKeepAliveInterval(5000)
@@ -98,10 +104,32 @@ export class BackendService {
         CO2: this.GetSensorValue(data, this.sensorsConfig.Co2), 
         DummySensor: this.GetSensorValue(data, this.sensorsConfig.DummySensor, "Value -999"),
         TimeStamp: timeStamp
-      };      
+      };
       this._sensorData.next(payload);
     });
+    this._connection?.on('SensorStatsToFrontEnd', async (data: SensorStatsDto[] | undefined) => {
+      if (!data || data.length === 0) {
+        //todo: log debug
+        return;
+      }
+      var param: SensorStatPayload = {
+        Formaldehyde: this.GetSensorStats(data, this.sensorsConfig.Formaldehyde),
+        Co2: this.GetSensorStats(data, this.sensorsConfig.Co2),
+        VoC: this.GetSensorStats(data, this.sensorsConfig.Voc),
+      };
+      this._sensorStats.next(param);
+    });
   }
+
+  private GetSensorStats(data: SensorStatsDto[],
+    sensorConfig: SensorConfig): SensorStats{
+      var stats = data.find(d=>d.type === sensorConfig.id) ?? new SensorStatsDto;
+      return {
+        Type: stats.type ?? sensorConfig.id,
+        Max: stats.max ?? NaN,
+        Average: stats.average ?? NaN,
+      };
+    }
 
   private GetSensorValue(
     data: SensorPayloadDto, 
@@ -140,4 +168,10 @@ class SensorCollectionDto {
 
 class SensorValueDto {
   [key: string]: number | undefined;
+}
+
+class SensorStatsDto {
+  type: string|undefined;
+  max: number|undefined;
+  average: number|undefined;
 }

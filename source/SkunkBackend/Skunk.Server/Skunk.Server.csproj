@@ -7,10 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Skunk.Postgres\Skunk.Postgres.csproj" />
     <ProjectReference Include="..\Skunk.Serial\Skunk.Serial.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Computer.Domain.Bus.Reactive" Version="0.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.3" />
     <PackageReference Include="System.Reactive.Linq" Version="6.0.0" />
   </ItemGroup>
 

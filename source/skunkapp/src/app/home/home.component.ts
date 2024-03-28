@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { TestTextComponent } from '../sensors/test-text/test-text.component';
 import { BackendService } from '../backend/backend.service';
-import { Observable, distinct, filter, map } from 'rxjs';
+import { Observable, distinctUntilChanged, filter, map } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { environment } from '../../environments/environment';
 import { SensorsConfig, SensorConfig } from "../../environments/SensorsConfig";
@@ -29,7 +29,15 @@ export class HomeComponent {
   readonly formaldehydeSensorValue$: Observable<number>;
   readonly co2Stats: StatsHack;
   readonly vocStats: StatsHack;
-  readonly formStats: StatsHack;  
+  readonly formStats: StatsHack;
+  
+  readonly bzMax$: Observable<number>;
+  readonly bzAvg$: Observable<number>;
+  readonly vocMax$: Observable<number>;
+  readonly vocAvg$: Observable<number>;
+  readonly co2Max$: Observable<number>;
+  readonly co2Avg$: Observable<number>;
+  
   constructor(
     private readonly backend: BackendService
   ) {
@@ -41,6 +49,40 @@ export class HomeComponent {
         console.info('sensor data', p);
         return p;
       });*/
+    
+    this.bzMax$ = this.backend.SensorStats$.pipe(
+      filter(s => !!s.Formaldehyde && !Number.isNaN(s.Formaldehyde.Max)),
+      map(s=>s.Formaldehyde.Max),
+      distinctUntilChanged()
+    );
+    this.bzAvg$ = this.backend.SensorStats$.pipe(
+      filter(s => !!s.Formaldehyde && !Number.isNaN(s.Formaldehyde.Average)),
+      map(s => s.Formaldehyde.Average),
+      distinctUntilChanged()
+    );
+
+    this.vocMax$ = this.backend.SensorStats$.pipe(
+      filter(s => !!s.VoC && !Number.isNaN(s.VoC.Max)),
+      map(s => s.VoC.Max),
+      distinctUntilChanged()
+    );
+    this.vocAvg$ = this.backend.SensorStats$.pipe(
+      filter(s => !!s.VoC && !Number.isNaN(s.VoC.Average)),
+      map(s => s.VoC.Average),
+      distinctUntilChanged()
+    );
+
+    this.co2Max$ = this.backend.SensorStats$.pipe(
+      filter(s => !!s.Co2 && !Number.isNaN(s.Co2.Max)),
+      map(s => s.Co2.Max),
+      distinctUntilChanged()
+    );
+    this.co2Avg$ = this.backend.SensorStats$.pipe(
+      filter(s => !!s.Co2 && !Number.isNaN(s.Co2.Average)),
+      map(s => s.Co2.Average),
+      distinctUntilChanged()
+    );
+
     this.dummySensorValue$ = backend.SensorData$.pipe(
       filter(p => typeof p.DummySensor == 'number'),
       map(p => {
@@ -53,7 +95,7 @@ export class HomeComponent {
         this.formStats.addSample(formValue);
         return formValue;
       }),
-      distinct());
+      distinctUntilChanged());
     this.voc$ = backend.SensorData$.pipe(
       filter(p => (typeof p.Voc) == 'number'),
       map(p => {
@@ -61,17 +103,15 @@ export class HomeComponent {
         this.vocStats.addSample(newVoc);
         return newVoc;
       }),
-      distinct());
+      distinctUntilChanged());
     this.co2$ = backend.SensorData$.pipe(
       filter(p => (typeof p.CO2) == 'number'),
       map(p => {
-        //console.warn(`Formaldehyde:${(p.Formaldehyde as number)} max:${this.formaldehydeSensorConfig.MaxValue}`);
         const newCo2 = p.CO2 as number;
         this.co2Stats.addSample(newCo2);
-        
         return newCo2;
       }),
-      distinct());
+      distinctUntilChanged());
   }
 }
 

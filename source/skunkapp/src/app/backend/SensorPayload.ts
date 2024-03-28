@@ -14,3 +14,4 @@ export class SensorPayload {
     /**Fake data for testing values are from 0-1 */
     readonly DummySensor?: number;
 }
+

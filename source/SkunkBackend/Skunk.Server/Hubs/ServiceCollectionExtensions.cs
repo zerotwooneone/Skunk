@@ -7,7 +7,8 @@ namespace Skunk.Server.Hubs
             this IServiceCollection services)
         {
             return services
-                .AddSingleton<IFrontendService, FrontendService>();
+                .AddSingleton<IFrontendService, FrontendService>()
+                .AddHostedService<FrontEndLifetimeService>();
         }
     }
 }

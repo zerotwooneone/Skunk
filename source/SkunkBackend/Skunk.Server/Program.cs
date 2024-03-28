@@ -1,10 +1,15 @@
-﻿using Skunk.Server.Hubs;
+﻿using Skunk.Server.DomainBus;
+using Skunk.Server.Hubs;
 using Skunk.Server.Json;
+using Skunk.Server.Postgres;
+using Skunk.Server.Reactive;
 using Skunk.Server.Serial;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration.AddJsonFile("skunk.json");
+builder.Configuration
+    .AddJsonFile("Config/skunk.json",false)
+    .AddJsonFile("Config/secrets.json", false);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews()
@@ -32,6 +37,9 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddSerial(builder.Configuration);
 builder.Services.AddHubs();
+builder.Services.AddPostgres(builder.Configuration);
+builder.Services.AddDomainBus();
+builder.Services.AddReactive();
 
 var app = builder.Build();
 

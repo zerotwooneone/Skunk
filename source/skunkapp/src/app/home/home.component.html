@@ -6,25 +6,27 @@
     <div class="sensor-container">
         <h2>Formaldehyde*</h2>
         <sk-knob [ngModel]="(formaldehydeSensorValue$|async)" [max]="this.formaldehydeSensorConfig.MaxValue ?? 1"
-            [marker1]="this.formStats.max" 
-            marker1Color="#F006">
+            [marker1]="this.bzMax$|async" 
+            marker1Color="#F006"
+            [marker2]="this.bzAvg$|async"
+            marker2Color="#FFF4">
         </sk-knob>
     </div>
     <div class="sensor-container">
         <h2>VOC ppb</h2>
         <sk-knob [ngModel]="(voc$|async)" [max]="this.vocConfig.MaxValue ?? 1"
-            [marker1]="this.vocStats.max" 
+            [marker1]="this.vocMax$|async" 
             marker1Color="#F006"
-            [marker2]="this.vocStats.avg"
+            [marker2]="this.vocAvg$|async"
             marker2Color="#FFF4">
         </sk-knob>
     </div>
     <div class="sensor-container">
         <h2>CO2 ppm</h2>
         <sk-knob [ngModel]="(co2$|async)" [max]="this.co2Config.MaxValue ?? 1" 
-            [marker1]="this.co2Stats.max" 
+            [marker1]="this.co2Max$|async" 
             marker1Color="#F006"
-            [marker2]="this.co2Stats.avg"
+            [marker2]="this.co2Avg$|async"
             marker2Color="#FFF4">
         </sk-knob>
     </div>

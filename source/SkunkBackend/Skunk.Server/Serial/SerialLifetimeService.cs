@@ -3,10 +3,11 @@ using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using Computer.Domain.Bus.Reactive.Contracts;
 using Microsoft.Extensions.Options;
 using Skunk.Serial.Configuration;
 using Skunk.Serial.Interfaces;
-using Skunk.Server.Hubs;
+using Skunk.Server.DomainBus;
 
 namespace Skunk.Server.Serial
 {
@@ -15,28 +16,27 @@ namespace Skunk.Server.Serial
         private readonly IConnectionFactory _connectionFactory;
         private readonly SerialConfiguration _serialConfiguration;
         private readonly ILogger<SerialLifetimeService> _logger;
-        private readonly IFrontendService _frontendService;
+        private readonly IReactiveBus _bus;
         private IConnection? _connection;
         private readonly Subject<string> _serialStrings;
-        private IDisposable? _stringSubscription;
+        private readonly CompositeDisposable _subscriptions;
         private readonly IScheduler _scheduler;
 
         public SerialLifetimeService(
             IConnectionFactory connectionFactory,
             IOptions<SerialConfiguration> serialConfiguration,
             ILogger<SerialLifetimeService> logger,
-            IFrontendService frontendService)
+            IReactiveBus bus)
         {
             _connectionFactory = connectionFactory;
             _serialConfiguration = serialConfiguration.Value;
             _logger = logger;
-            _frontendService = frontendService;
+            _bus = bus;
 
             _serialStrings = new Subject<string>();
             
             _scheduler = new EventLoopScheduler();
-            
-            _stringSubscription = ThrottleStrings();
+            _subscriptions = new CompositeDisposable();
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -54,6 +54,8 @@ namespace Skunk.Server.Serial
 
             _connection = connection;
             //todo: implement a method to keep the connection alive
+            
+            _subscriptions.Add(ThrottleStrings());
             
             return Task.CompletedTask;
         }
@@ -86,6 +88,7 @@ namespace Skunk.Server.Serial
                 
                 //only where there is exactly one separator and the parts are not blank
                 .Where(a=>a.Length ==2 && !string.IsNullOrWhiteSpace(a[0]) && !string.IsNullOrWhiteSpace(a[1]))
+                .Select(s=>new ThrottledString {Text=s,UtcTimestamp= DateTimeOffset.UtcNow})
                 
                 //collect these until timespan has elapsed, then send the list
                 .Buffer(Observable.Interval(TimeSpan.FromSeconds(1)))
@@ -104,7 +107,7 @@ namespace Skunk.Server.Serial
                 
                 //one async at a time, in order of arrival 
                 .Concat();
-
+            
             var errorHandler = asyncObs
                 .Where(n => n.Kind == NotificationKind.OnError)
                 .Subscribe(n =>
@@ -112,47 +115,44 @@ namespace Skunk.Server.Serial
                     _logger.LogError(n.Exception, "error occurred handling strings");
                 });
             
-            var success = asyncObs
-                .Where(n=>n.Kind == NotificationKind.OnNext)
-                
-                //need to subscribe to start things
-                .Subscribe();
-            
-            return new CompositeDisposable(success, errorHandler);
+            //we only need to subscribe to the error handler as success in handled in that pipeline
+            return errorHandler;
         }
 
-        private async Task OnThrottledString(IReadOnlyList<string[]> values)
+        private async Task OnThrottledString(IReadOnlyList<ThrottledString> values)
         {
-            var unixms = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-            const string valueKey = "value";
-            Dictionary<string,SensorValues> dict = new Dictionary<string, SensorValues>
-            {
-                {"timeStamp", new SensorValues
-                {
-                    {valueKey, Convert.ToSingle(unixms)}
-                }}
-            };
+            var payloadsByName = new Dictionary<string, SensorReading>();
             foreach (var value in values)
             {
-                if (!float.TryParse(value[1], out var fValue))
+                if (!float.TryParse(value.Text.Skip(1).First(), out var fValue))
                 {
                     continue;
                 }
-                
-                dict[value[0]] = new SensorValues
+
+                var name = value.Text.First();
+                var payload = new SensorReading
                 {
-                    {valueKey, fValue}
+                    name = name,
+                    value = fValue,
+                    utcTimestamp = value.UtcTimestamp
                 };
+                //prevent duplicates, this overwrites older duplicates
+                payloadsByName[name] = payload;
             }
-            
-            var sensorPayload = new SensorPayload()
+
+            foreach (var payload in payloadsByName.Values)
             {
-                Sensors = dict,
-            };
-            await _frontendService.SendSensorPayload(sensorPayload);
+                await _bus.Publish("sensorRead", payload);
+            }
         }
 
-        private async void OnSerialString(object? sender, string e)
+        private class ThrottledString
+        {
+            public IReadOnlyCollection<string> Text { get; init; }
+            public DateTimeOffset UtcTimestamp { get; init; }
+        }
+
+        private void OnSerialString(object? sender, string e)
         {
             _serialStrings.OnNext(e);
         }
@@ -160,6 +160,8 @@ namespace Skunk.Server.Serial
         public Task StopAsync(CancellationToken cancellationToken)
         {
             CleanupConnection();
+            
+            _subscriptions.Dispose();
 
             return Task.CompletedTask;
         }
