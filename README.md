@@ -33,3 +33,8 @@ then
 > echo 'export DOTNET_ROOT=$HOME/.dotnet' >> ~/.bashrc
 echo 'export PATH=$PATH:$HOME/.dotnet' >> ~/.bashrc
 source ~/.bashrc
+
+## Sensors
+
+### SGP30
+Documentation https://github.com/RobTillaart/SGP30 
