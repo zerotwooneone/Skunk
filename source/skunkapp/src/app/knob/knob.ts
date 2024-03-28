@@ -179,7 +179,7 @@ export class KnobComponent {
 
     constructor(private cd: ChangeDetectorRef) {}
 
-    mapRange(x: number, inMin: number, inMax: number, outMin: number, outMax: number) {
+    mapRange(x: number, inMin: number, inMax: number, outMin: number, outMax: number):number {
         return ((x - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
     }
 
@@ -209,7 +209,15 @@ export class KnobComponent {
     }
 
     rangePath() {
-        return `M ${this.minX()} ${this.minY()} A ${this.radius} ${this.radius} 0 1 1 ${this.maxX()} ${this.maxY()}`;
+        let maxX: number|string = this.maxX();
+        if(Number.isNaN(maxX)){
+            maxX = "";
+        }
+        let maxY: number | string = this.maxY();
+        if (Number.isNaN(maxY)) {
+            maxY = "";
+        }
+        return `M ${this.minX()} ${this.minY()} A ${this.radius} ${this.radius} 0 1 1 ${maxX} ${maxY}`;
     }
 
     valuePath() {
@@ -226,13 +234,13 @@ export class KnobComponent {
     }
 
     marker1Radians() {
-        return (typeof this._marker1Value == 'number') 
+        return (typeof this._marker1Value == 'number' && !Number.isNaN(this._marker1Value)) 
             ? this.mapRange(this._marker1Value, this.min, this.max, this.minRadians, this.maxRadians)
             : undefined;
     }
 
     marker2Radians() {
-        return (typeof this._marker2Value == 'number')
+        return (typeof this._marker2Value == 'number' && !Number.isNaN(this._marker2Value))
             ? this.mapRange(this._marker2Value, this.min, this.max, this.minRadians, this.maxRadians)
             : undefined;
     }
@@ -271,14 +279,14 @@ export class KnobComponent {
 
     marker1X() {
         const rad = this.marker1Radians();
-        return (typeof rad =='number') 
+        return (typeof rad == 'number' && !Number.isNaN(rad)) 
             ? this.midX + Math.cos(rad) * this.radius
             : undefined;
     }
 
     marker1Y() {
         const rad = this.marker1Radians();
-        return (typeof rad == 'number')
+        return (typeof rad == 'number' && !Number.isNaN(rad))
             ? this.midY - Math.sin(rad) * this.radius
             : undefined;
     }
@@ -291,14 +299,14 @@ export class KnobComponent {
 
     marker2X() {
         const rad = this.marker2Radians();
-        return (typeof rad == 'number')
+        return (typeof rad == 'number' && !Number.isNaN(rad))
             ? this.midX + Math.cos(rad) * this.radius
             : undefined;
     }
 
     marker2Y() {
         const rad = this.marker2Radians();
-        return (typeof rad == 'number')
+        return (typeof rad == 'number' && !Number.isNaN(rad))
             ? this.midY - Math.sin(rad) * this.radius
             : undefined;
     }
