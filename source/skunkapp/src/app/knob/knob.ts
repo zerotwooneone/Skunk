@@ -229,20 +229,26 @@ export class KnobComponent {
         else return this.mapRange(0, this.min, this.max, this.minRadians, this.maxRadians);
     }
 
-    valueRadians() {
-        return this.mapRange(this._value, this.min, this.max, this.minRadians, this.maxRadians);
+    valueRadians():number {
+        return (typeof this._value == 'number' && !Number.isNaN(this._value)) 
+            ? this.mapRange(this.clamp(this._value,this.min,this.max), this.min, this.max, this.minRadians, this.maxRadians)
+            : 0;
     }
 
-    marker1Radians() {
+    marker1Radians():number|undefined {
         return (typeof this._marker1Value == 'number' && !Number.isNaN(this._marker1Value)) 
-            ? this.mapRange(this._marker1Value, this.min, this.max, this.minRadians, this.maxRadians)
+            ? this.mapRange(this.clamp(this._marker1Value, this.min,this.max), this.min, this.max, this.minRadians, this.maxRadians)
             : undefined;
     }
 
-    marker2Radians() {
+    marker2Radians():number|undefined {
         return (typeof this._marker2Value == 'number' && !Number.isNaN(this._marker2Value))
-            ? this.mapRange(this._marker2Value, this.min, this.max, this.minRadians, this.maxRadians)
+            ? this.mapRange(this.clamp(this._marker2Value, this.min, this.max), this.min, this.max, this.minRadians, this.maxRadians)
             : undefined;
+    }
+
+    private clamp(value: number, min: number, max: number):number{
+        return Math.min(Math.max(min, value),max);
     }
 
     minX() {
